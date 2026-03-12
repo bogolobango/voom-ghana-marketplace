@@ -47,15 +47,24 @@ pnpm db:push      # Generate + run Drizzle migrations
 ```
 
 ## Environment Variables
-| Variable | Purpose |
-|----------|---------|
-| `DATABASE_URL` | PostgreSQL connection string (Replit-managed) |
-| `JWT_SECRET` | Cookie/session signing |
-| `PORT` | Server port (set to 5000) |
-| `VITE_APP_ID` | App identifier (optional - OAuth) |
-| `OAUTH_SERVER_URL` | OAuth provider URL (optional) |
-| `VITE_OAUTH_PORTAL_URL` | OAuth portal URL (optional) |
-| `OWNER_OPEN_ID` | Auto-admin user OpenID (optional) |
+| Variable | Purpose | Environment |
+|----------|---------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string (Replit-managed, local dev) | runtime secret |
+| `SUPABASE_DATABASE_URL` | Supabase PostgreSQL URL (used in production) | production only |
+| `JWT_SECRET` | Cookie/session signing | shared |
+| `PORT` | Server port (set to 5000) | shared |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name for image uploads | shared |
+| `CLOUDINARY_API_KEY` | Cloudinary API key | shared |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret | shared |
+| `VITE_APP_ID` | App identifier (optional - OAuth) | optional |
+| `OAUTH_SERVER_URL` | OAuth provider URL (optional) | optional |
+| `VITE_OAUTH_PORTAL_URL` | OAuth portal URL (optional) | optional |
+| `OWNER_OPEN_ID` | Auto-admin user OpenID (optional) | optional |
+
+## Database Strategy
+- **Development**: Uses Replit's built-in PostgreSQL (`DATABASE_URL` runtime secret)
+- **Production**: Uses Supabase PostgreSQL (`SUPABASE_DATABASE_URL` production env var)
+- `server/db.ts` prefers `SUPABASE_DATABASE_URL` over `DATABASE_URL` when set
 
 ## Replit Setup Notes
 - **Database**: Migrated from MySQL to PostgreSQL to use Replit's built-in database

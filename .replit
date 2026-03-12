@@ -9,7 +9,13 @@ channel = "stable-25_05"
 
 [userenv.shared]
 PORT = "5000"
-JWT_SECRET = "6c19422cbd5ea700fad5cbaa74fad90de96bff5b7dc044ac4f2f5384e25fc8d9"
+JWT_SECRET = "voom-ghana-marketplace-secret-key-2026-secure-random"
+CLOUDINARY_CLOUD_NAME = "dgzxwtquh"
+CLOUDINARY_API_KEY = "667314953756621"
+CLOUDINARY_API_SECRET = "Y3ciBOs-Ff_XEde566fWSHg3xzo"
+
+[userenv.production]
+SUPABASE_DATABASE_URL = "postgresql://postgres:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkaW51Ym5sa2ZxbHh0cmRnc25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNzk5OTIsImV4cCI6MjA4ODg1NTk5Mn0.bH6sbn0OR-2OfRZQ_bQ1Gi5MDnnv8eeAos2MjQy0fcU@db.hdinubnlkfqlxtrdgsne.supabase.co:5432/postgres"
 
 [workflows]
 runButton = "Project"
