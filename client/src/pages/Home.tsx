@@ -215,7 +215,7 @@ export default function Home() {
 
       {/* Value Props — atmospheric dark section */}
       <section className="zen-hero zen-section" style={{
-        background: "linear-gradient(to bottom, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.72) 100%), url('/why-voom-bg.jpg') center top / cover no-repeat",
+        background: "linear-gradient(to bottom, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.72) 100%), url('/why-voom-bg.jpg') center 55% / cover no-repeat",
       }}>
         <div className="container relative">
           <h2 className="text-2xl font-light text-white text-center mb-12 tracking-[0.04em]">Why VOOM?</h2>
