@@ -94,9 +94,11 @@ export default function Checkout() {
         const vendorTotal = vendorItems.reduce((s: number, vi: CartItemWithProduct) => s + parseFloat(vi.product!.price) * vi.quantity, 0);
         const msg = `🛒 *New VOOM Order: ${lastOrderNumber}*\n\nBuyer: ${form.buyerName}\nPhone: ${form.buyerPhone}\n\nItems:\n${itemsList}\n\n*Total: ${formatGHS(vendorTotal)}*\n\nShipping to: ${form.shippingAddress}, ${form.shippingCity}, ${form.shippingRegion}\n\n${form.notes ? `Notes: ${form.notes}` : ""}`;
 
-        // Get vendor WhatsApp from first item
-        // We'll use a generic link for now
-        lastWhatsappLink = generateWhatsAppLink(form.buyerPhone, msg);
+        // Get vendor WhatsApp from first item in group
+        const vendorPhone = vendorItems[0]?.vendor?.whatsapp || vendorItems[0]?.vendor?.phone || "";
+        if (vendorPhone) {
+          lastWhatsappLink = generateWhatsAppLink(vendorPhone, msg);
+        }
       }
 
       utils.cart.list.invalidate();
@@ -127,6 +129,13 @@ export default function Checkout() {
           Your order has been sent to the vendor. You can track it in your orders page.
         </p>
         <div className="space-y-4">
+          {orderCreated.whatsappLink && (
+            <Button className="w-full h-12 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white" asChild>
+              <a href={orderCreated.whatsappLink} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="h-4 w-4 mr-2" /> Contact Vendor on WhatsApp
+              </a>
+            </Button>
+          )}
           <Button className="w-full h-12 text-white rounded-full" onClick={() => navigate("/orders")}>
             View My Orders
           </Button>

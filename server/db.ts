@@ -308,7 +308,17 @@ export async function getCartItems(userId: number) {
   const productIds = items.map(i => i.productId);
   const prods = await db.select().from(products).where(inArray(products.id, productIds));
   const prodMap = new Map(prods.map(p => [p.id, p]));
-  return items.map(item => ({ ...item, product: prodMap.get(item.productId) }));
+  // Fetch vendor info for WhatsApp links in checkout
+  const vendorIds = Array.from(new Set(prods.map(p => p.vendorId)));
+  const vends = vendorIds.length > 0
+    ? await db.select({ id: vendors.id, businessName: vendors.businessName, phone: vendors.phone, whatsapp: vendors.whatsapp })
+        .from(vendors).where(inArray(vendors.id, vendorIds))
+    : [];
+  const vendorMap = new Map(vends.map(v => [v.id, v]));
+  return items.map(item => {
+    const product = prodMap.get(item.productId);
+    return { ...item, product, vendor: product ? vendorMap.get(product.vendorId) : undefined };
+  });
 }
 
 export async function addToCart(userId: number, productId: number, quantity: number) {
