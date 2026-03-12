@@ -27,13 +27,8 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 glass-strong shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
       <div className="container flex items-center justify-between h-16">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 no-underline">
-          <div className="w-9 h-9 rounded-2xl bg-primary/90 flex items-center justify-center shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)]">
-            <span className="text-white font-semibold text-lg tracking-wide">V</span>
-          </div>
-          <span className="text-xl font-light text-foreground tracking-[0.12em]">
-            VOOM
-          </span>
+        <Link href="/" className="flex items-center no-underline">
+          <img src="/voom-logo.png" alt="VOOM" className="h-10 w-auto" />
         </Link>
 
         {/* Desktop Nav */}
