@@ -45,8 +45,10 @@ export const appRouter = router({
 
       // Find or create user
       let user = await db.getUserByPhone(cleanPhone);
+      let isNewUser = false;
       if (!user) {
         user = await db.createPhoneUser(cleanPhone, input.name);
+        isNewUser = true;
       }
       if (!user) throw new Error("Failed to create account");
 
@@ -57,7 +59,7 @@ export const appRouter = router({
       // In production, send SMS here via Hubtel/Arkesel
       console.log(`[OTP] Code for ${cleanPhone}: ${otp}`);
 
-      return { success: true, message: "OTP sent to your phone" };
+      return { success: true, message: "OTP sent to your phone", isNewUser };
     }),
     verifyOtp: publicProcedure.input(z.object({
       phone: z.string().min(1),
@@ -152,8 +154,11 @@ export const appRouter = router({
         throw new Error("Please enter a valid Ghana phone number (e.g. 0241234567)");
       }
 
-      const result = await db.createVendor({ ...input, userId: ctx.user.id });
-      return { success: true, vendorId: result?.id, status: "pending" as const };
+      // Auto-approve vendors for MVP — they can start listing immediately
+      const result = await db.createVendor({ ...input, userId: ctx.user.id, status: "approved" });
+      // Update user role to vendor
+      await db.updateUserRole(ctx.user.id, "vendor");
+      return { success: true, vendorId: result?.id, status: "approved" as const };
     }),
     me: protectedProcedure.query(async ({ ctx }) => {
       return db.getVendorByUserId(ctx.user.id);

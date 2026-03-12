@@ -80,8 +80,8 @@ export default function VendorRegister() {
     }
     try {
       await registerVendor.mutateAsync(form);
-      toast.success("Vendor application submitted! You'll be notified once approved.");
-      navigate("/");
+      toast.success("You're all set! Start listing your products.");
+      navigate("/vendor/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Failed to register");
     }
@@ -197,11 +197,11 @@ export default function VendorRegister() {
               {registerVendor.isPending ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...</>
               ) : (
-                "Submit Application"
+                "Start Selling"
               )}
             </Button>
             <p className="text-xs text-center text-muted-foreground/60 tracking-wide">
-              Your application will be reviewed by our team. You'll be notified once approved.
+              You'll be able to list products immediately after registration.
             </p>
           </CardContent>
         </Card>

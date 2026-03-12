@@ -102,6 +102,9 @@ export default function VendorDashboard() {
   const orders = vendorOrders.data || [];
   const inquiriesList = vendorInquiries.data || [];
   const pendingInquiries = inquiriesList.filter(i => i.status === "pending");
+  const pendingOrders = orders.filter(o => o.status === "pending");
+  const confirmedOrders = orders.filter(o => ["confirmed", "processing", "shipped"].includes(o.status));
+  const completedOrders = orders.filter(o => o.status === "delivered");
   const totalRevenue = orders
     .filter((o) => o.status !== "cancelled")
     .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0);
@@ -183,11 +186,12 @@ export default function VendorDashboard() {
 
       <div className="container py-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-          <StatCard icon={<Package className="h-5 w-5" />} label="Products" value={products.length} />
-          <StatCard icon={<ShoppingCart className="h-5 w-5" />} label="Orders" value={orders.length} />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <StatCard icon={<Package className="h-5 w-5" />} label="Listings" value={products.length} />
+          <StatCard icon={<ShoppingCart className="h-5 w-5" />} label="Pending" value={pendingOrders.length} />
+          <StatCard icon={<Eye className="h-5 w-5" />} label="In Progress" value={confirmedOrders.length} />
+          <StatCard icon={<TrendingUp className="h-5 w-5" />} label="Completed" value={completedOrders.length} />
           <StatCard icon={<TrendingUp className="h-5 w-5" />} label="Revenue" value={formatGHS(totalRevenue)} />
-          <StatCard icon={<Eye className="h-5 w-5" />} label="Rating" value={vendor.data.rating || "N/A"} />
         </div>
 
         <Tabs defaultValue="products">

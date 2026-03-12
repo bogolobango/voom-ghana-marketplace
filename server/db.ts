@@ -56,6 +56,12 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function updateUserRole(userId: number, role: "user" | "admin" | "vendor") {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ role }).where(eq(users.id, userId));
+}
+
 export async function updateUserProfile(userId: number, data: { name?: string; email?: string; phone?: string }) {
   const db = await getDb();
   if (!db) return;
