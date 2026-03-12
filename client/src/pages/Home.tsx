@@ -37,8 +37,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Hero Section — Zen atmospheric */}
-      <section className="zen-hero">
+      {/* Hero Section — with car background */}
+      <section className="zen-hero" style={{
+        backgroundImage: "linear-gradient(145deg, rgba(20,20,30,0.78) 0%, rgba(15,15,25,0.65) 50%, rgba(10,10,20,0.72) 100%), url('/hero-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }}>
         <div className="container relative py-20 md:py-28 lg:py-32">
           <div className="max-w-2xl space-y-8">
             <div className="inline-flex items-center gap-2.5 glass-dark rounded-full px-5 py-2 text-sm text-white/80 tracking-wide">
