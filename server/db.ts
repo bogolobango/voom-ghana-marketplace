@@ -117,6 +117,12 @@ export async function verifyOtp(phone: string, otpCode: string): Promise<boolean
   return true;
 }
 
+export async function updateUserRole(userId: number, role: "user" | "vendor" | "admin") {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ role }).where(eq(users.id, userId));
+}
+
 // ─── Vehicle Reference Helpers ───
 export async function getVehicleMakes() {
   const db = await getDb();
