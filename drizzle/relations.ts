@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { users, vendors, products, categories, cartItems, orders, orderItems, reviews, notifications, inquiries } from "./schema";
+import { users, vendors, products, categories, cartItems, orders, orderItems, reviews, notifications, inquiries, vehicleMakes, vehicleModels } from "./schema";
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   vendor: one(vendors, { fields: [users.id], references: [vendors.userId] }),
@@ -21,6 +21,14 @@ export const vendorsRelations = relations(vendors, ({ one, many }) => ({
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
   parent: one(categories, { fields: [categories.parentId], references: [categories.id] }),
   products: many(products),
+}));
+
+export const vehicleMakesRelations = relations(vehicleMakes, ({ many }) => ({
+  models: many(vehicleModels),
+}));
+
+export const vehicleModelsRelations = relations(vehicleModels, ({ one }) => ({
+  make: one(vehicleMakes, { fields: [vehicleModels.makeId], references: [vehicleMakes.id] }),
 }));
 
 export const productsRelations = relations(products, ({ one, many }) => ({

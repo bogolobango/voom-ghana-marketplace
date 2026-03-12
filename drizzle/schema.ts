@@ -8,6 +8,9 @@ export const users = mysqlTable("users", {
   phone: varchar("phone", { length: 20 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin", "vendor"]).default("user").notNull(),
+  otpCode: varchar("otpCode", { length: 10 }),
+  otpExpiresAt: timestamp("otpExpiresAt"),
+  isVerified: boolean("isVerified").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -51,6 +54,21 @@ export const categories = mysqlTable("categories", {
 });
 
 export type Category = typeof categories.$inferSelect;
+
+export const vehicleMakes = mysqlTable("vehicle_makes", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+});
+
+export type VehicleMake = typeof vehicleMakes.$inferSelect;
+
+export const vehicleModels = mysqlTable("vehicle_models", {
+  id: int("id").autoincrement().primaryKey(),
+  makeId: int("makeId").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+});
+
+export type VehicleModel = typeof vehicleModels.$inferSelect;
 
 export const products = mysqlTable("products", {
   id: int("id").autoincrement().primaryKey(),

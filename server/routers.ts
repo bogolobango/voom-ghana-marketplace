@@ -1,6 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { isValidStatusTransition, isValidGhanaPhone } from "@shared/marketplace";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
@@ -31,6 +32,52 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
+    }),
+    requestOtp: publicProcedure.input(z.object({
+      phone: z.string().min(1, "Phone number is required"),
+      name: z.string().min(1, "Name is required").max(255),
+    })).mutation(async ({ input }) => {
+      // Normalize phone: ensure it has country code format for storage
+      const cleanPhone = input.phone.replace(/[\s\-()]/g, "");
+      if (!isValidGhanaPhone(cleanPhone)) {
+        throw new Error("Please enter a valid Ghana phone number (e.g. 0241234567)");
+      }
+
+      // Find or create user
+      let user = await db.getUserByPhone(cleanPhone);
+      if (!user) {
+        user = await db.createPhoneUser(cleanPhone, input.name);
+      }
+      if (!user) throw new Error("Failed to create account");
+
+      // Generate OTP — for MVP, use "1234" (real SMS in Phase 2)
+      const otp = "1234";
+      await db.saveOtp(user.id, otp);
+
+      // In production, send SMS here via Hubtel/Arkesel
+      console.log(`[OTP] Code for ${cleanPhone}: ${otp}`);
+
+      return { success: true, message: "OTP sent to your phone" };
+    }),
+    verifyOtp: publicProcedure.input(z.object({
+      phone: z.string().min(1),
+      otp: z.string().min(1),
+    })).mutation(async ({ ctx, input }) => {
+      const cleanPhone = input.phone.replace(/[\s\-()]/g, "");
+      const valid = await db.verifyOtp(cleanPhone, input.otp);
+      if (!valid) throw new Error("Invalid or expired OTP");
+
+      const user = await db.getUserByPhone(cleanPhone);
+      if (!user) throw new Error("User not found");
+
+      // Create session token using the user's openId
+      const token = await sdk.createSessionToken(user.openId, { name: user.name || "" });
+
+      // Set session cookie
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(COOKIE_NAME, token, cookieOptions);
+
+      return { success: true, user };
     }),
     updateProfile: protectedProcedure.input(z.object({
       name: z.string().min(1).max(255).optional(),
@@ -511,6 +558,16 @@ export const appRouter = router({
     })).mutation(async ({ ctx, input }) => {
       await db.updateInquiryStatus(input.id, ctx.vendor.id, input.status, input.vendorNotes);
       return { success: true };
+    }),
+  }),
+
+  // ─── Vehicle Reference Data ───
+  vehicle: router({
+    makes: publicProcedure.query(async () => {
+      return db.getVehicleMakes();
+    }),
+    models: publicProcedure.input(z.object({ makeId: z.number() })).query(async ({ input }) => {
+      return db.getVehicleModelsByMake(input.makeId);
     }),
   }),
 

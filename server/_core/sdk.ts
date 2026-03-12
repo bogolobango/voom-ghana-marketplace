@@ -214,8 +214,7 @@ class SDKServer {
 
       if (
         !isNonEmptyString(openId) ||
-        !isNonEmptyString(appId) ||
-        !isNonEmptyString(name)
+        !isNonEmptyString(appId)
       ) {
         console.warn("[Auth] Session payload missing required fields");
         return null;
@@ -224,7 +223,7 @@ class SDKServer {
       return {
         openId,
         appId,
-        name,
+        name: (typeof name === "string" ? name : ""),
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
@@ -270,8 +269,12 @@ class SDKServer {
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
-    // If user not in DB, sync from OAuth server automatically
+    // If user not in DB, try to sync from OAuth server (skip for phone-auth users)
     if (!user) {
+      if (sessionUserId.startsWith("phone:")) {
+        // Phone-auth user not found — session is invalid
+        throw ForbiddenError("User not found");
+      }
       try {
         const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
         await db.upsertUser({

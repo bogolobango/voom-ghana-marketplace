@@ -22,10 +22,12 @@ import Categories from "./pages/Categories";
 import AdminDashboard from "./pages/AdminDashboard";
 import OrderDetail from "./pages/OrderDetail";
 import Profile from "./pages/Profile";
+import Login from "./pages/Login";
 
 function Router() {
   return (
     <Switch>
+      <Route path="/login" component={Login} />
       <Route path="/" component={Home} />
       <Route path="/products" component={Products} />
       <Route path="/products/:id" component={ProductDetail} />

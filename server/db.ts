@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users, vendors, InsertVendor, products, InsertProduct,
   categories, cartItems, orders, orderItems, reviews, notifications, inquiries,
+  vehicleMakes, vehicleModels,
   type Vendor, type Product, type Category, type Order, type InsertInquiry
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -63,6 +64,62 @@ export async function updateUserProfile(userId: number, data: { name?: string; e
   if (Object.keys(updateSet).length > 0) {
     await db.update(users).set(updateSet).where(eq(users.id, userId));
   }
+}
+
+// ─── Phone Auth Helpers ───
+export async function getUserByPhone(phone: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
+  return result[0];
+}
+
+export async function createPhoneUser(phone: string, name: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  // Use phone as openId for phone-auth users
+  const openId = `phone:${phone}`;
+  await db.insert(users).values({
+    openId,
+    phone,
+    name,
+    loginMethod: "phone",
+    isVerified: false,
+  });
+  return db.select().from(users).where(eq(users.openId, openId)).limit(1).then(r => r[0]);
+}
+
+export async function saveOtp(userId: number, otpCode: string) {
+  const db = await getDb();
+  if (!db) return;
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+  await db.update(users).set({ otpCode, otpExpiresAt: expiresAt }).where(eq(users.id, userId));
+}
+
+export async function verifyOtp(phone: string, otpCode: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const user = await getUserByPhone(phone);
+  if (!user) return false;
+  if (user.otpCode !== otpCode) return false;
+  if (user.otpExpiresAt && new Date(user.otpExpiresAt) < new Date()) return false;
+  // Mark verified and clear OTP
+  await db.update(users).set({ otpCode: null, otpExpiresAt: null, isVerified: true })
+    .where(eq(users.id, user.id));
+  return true;
+}
+
+// ─── Vehicle Reference Helpers ───
+export async function getVehicleMakes() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(vehicleMakes).orderBy(asc(vehicleMakes.name));
+}
+
+export async function getVehicleModelsByMake(makeId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(vehicleModels).where(eq(vehicleModels.makeId, makeId)).orderBy(asc(vehicleModels.name));
 }
 
 // ─── Category Helpers ───
