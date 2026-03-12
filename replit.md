@@ -62,9 +62,10 @@ pnpm db:push      # Generate + run Drizzle migrations
 | `OWNER_OPEN_ID` | Auto-admin user OpenID (optional) | optional |
 
 ## Database Strategy
-- **Development**: Uses Replit's built-in PostgreSQL (`DATABASE_URL` runtime secret)
-- **Production**: Uses Supabase PostgreSQL (`SUPABASE_DATABASE_URL` production env var)
+- **Development & Production**: Uses Supabase PostgreSQL via connection pooler (`SUPABASE_DATABASE_URL` shared env var)
+- Pooler endpoint: `aws-0-us-west-2.pooler.supabase.com:6543` (transaction mode)
 - `server/db.ts` prefers `SUPABASE_DATABASE_URL` over `DATABASE_URL` when set
+- Falls back to Replit's local `DATABASE_URL` if `SUPABASE_DATABASE_URL` is unset
 
 ## Replit Setup Notes
 - **Database**: Migrated from MySQL to PostgreSQL to use Replit's built-in database

@@ -13,9 +13,9 @@ JWT_SECRET = "voom-ghana-marketplace-secret-key-2026-secure-random"
 CLOUDINARY_CLOUD_NAME = "dgzxwtquh"
 CLOUDINARY_API_KEY = "667314953756621"
 CLOUDINARY_API_SECRET = "Y3ciBOs-Ff_XEde566fWSHg3xzo"
+SUPABASE_DATABASE_URL = "postgresql://postgres.hdinubnlkfqlxtrdgsne:MobutuLumumba1960@aws-0-us-west-2.pooler.supabase.com:6543/postgres"
 
 [userenv.production]
-SUPABASE_DATABASE_URL = "postgresql://postgres:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkaW51Ym5sa2ZxbHh0cmRnc25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNzk5OTIsImV4cCI6MjA4ODg1NTk5Mn0.bH6sbn0OR-2OfRZQ_bQ1Gi5MDnnv8eeAos2MjQy0fcU@db.hdinubnlkfqlxtrdgsne.supabase.co:5432/postgres"
 
 [workflows]
 runButton = "Project"
