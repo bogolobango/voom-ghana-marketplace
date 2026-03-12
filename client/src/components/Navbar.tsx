@@ -98,6 +98,11 @@ export default function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52 rounded-2xl glass-strong border-white/20 shadow-[0_8px_32px_-6px_rgba(0,0,0,0.08)]">
                   <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center gap-2 no-underline">
+                      <User className="h-4 w-4" /> My Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/orders" className="flex items-center gap-2 no-underline">
                       <Package className="h-4 w-4" /> My Orders
                     </Link>

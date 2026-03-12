@@ -6,6 +6,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import * as db from "./db";
+import { storagePut } from "./storage";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== "admin") {
@@ -30,6 +31,39 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
+    }),
+    updateProfile: protectedProcedure.input(z.object({
+      name: z.string().min(1).max(255).optional(),
+      email: z.string().email().max(320).optional(),
+      phone: z.string().max(20).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      if (input.phone && !isValidGhanaPhone(input.phone)) {
+        throw new Error("Please enter a valid Ghana phone number");
+      }
+      await db.updateUserProfile(ctx.user.id, input);
+      return { success: true };
+    }),
+  }),
+
+  // ─── File Upload ───
+  upload: router({
+    image: protectedProcedure.input(z.object({
+      base64: z.string().min(1),
+      fileName: z.string().min(1).max(255),
+      contentType: z.string().refine(
+        (v) => v.startsWith("image/"),
+        { message: "Only image files are allowed" }
+      ),
+    })).mutation(async ({ ctx, input }) => {
+      const buffer = Buffer.from(input.base64, "base64");
+      // Max 5MB
+      if (buffer.length > 5 * 1024 * 1024) {
+        throw new Error("Image must be less than 5MB");
+      }
+      const ext = input.fileName.split(".").pop() || "jpg";
+      const key = `products/${ctx.user.id}/${nanoid(12)}.${ext}`;
+      const result = await storagePut(key, buffer, input.contentType);
+      return { url: result.url };
     }),
   }),
 

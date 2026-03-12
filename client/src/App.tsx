@@ -19,6 +19,8 @@ import Orders from "./pages/Orders";
 import Notifications from "./pages/Notifications";
 import Categories from "./pages/Categories";
 import AdminDashboard from "./pages/AdminDashboard";
+import OrderDetail from "./pages/OrderDetail";
+import Profile from "./pages/Profile";
 
 function Router() {
   return (
@@ -33,6 +35,8 @@ function Router() {
       <Route path="/vendor/register" component={VendorRegister} />
       <Route path="/vendor/dashboard" component={VendorDashboard} />
       <Route path="/orders" component={Orders} />
+      <Route path="/orders/:id" component={OrderDetail} />
+      <Route path="/profile" component={Profile} />
       <Route path="/notifications" component={Notifications} />
       <Route path="/categories" component={Categories} />
       <Route path="/admin" component={AdminDashboard} />

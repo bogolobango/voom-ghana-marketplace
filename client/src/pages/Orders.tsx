@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { formatGHS } from "@shared/marketplace";
 import { Package, Loader2, ShoppingCart, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function Orders() {
   const { isAuthenticated, loading } = useAuth();
+  const [, navigate] = useLocation();
   const orders = trpc.order.myOrders.useQuery(undefined, { enabled: isAuthenticated });
   const cancelOrder = trpc.order.cancel.useMutation({
     onSuccess: () => {
@@ -57,7 +58,7 @@ export default function Orders() {
         ) : (orders.data?.length || 0) > 0 ? (
           <div className="space-y-4">
             {orders.data?.map((order) => (
-              <Card key={order.id} className="zen-card rounded-2xl border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+              <Card key={order.id} className="zen-card rounded-2xl border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate(`/orders/${order.id}`)}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -86,7 +87,8 @@ export default function Orders() {
                           size="sm"
                           className="rounded-full text-rose-600 border-rose-200/50 hover:bg-rose-50/50 text-xs"
                           disabled={cancelOrder.isPending}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (confirm("Are you sure you want to cancel this order?")) {
                               cancelOrder.mutate({ id: order.id });
                             }

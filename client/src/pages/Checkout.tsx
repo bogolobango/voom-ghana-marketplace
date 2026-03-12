@@ -297,6 +297,12 @@ export default function Checkout() {
                     <>Place Order</>
                   )}
                 </Button>
+                {vendorGroups.size > 1 && (
+                  <p className="text-xs text-amber-600/80 tracking-wide text-center bg-amber-50/50 rounded-xl p-2.5">
+                    Your cart has items from {vendorGroups.size} different vendors.
+                    {vendorGroups.size} separate orders will be created.
+                  </p>
+                )}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground/60 tracking-wide justify-center">
                   <MessageCircle className="h-3.5 w-3.5" />
                   Vendor will confirm via WhatsApp

@@ -13,9 +13,9 @@ import { useLocation } from "wouter";
 import { formatGHS, VEHICLE_MAKES, PART_CONDITIONS } from "@shared/marketplace";
 import {
   Package, ShoppingCart, Plus, Loader2, Store, TrendingUp,
-  Edit, Trash2, Eye,
+  Edit, Trash2, Eye, Upload, X, ChevronDown, ChevronUp, User, MapPin, Phone as PhoneIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 
 export default function VendorDashboard() {
@@ -34,6 +34,11 @@ export default function VendorDashboard() {
     vehicleMake: "", vehicleModel: "", yearFrom: "", yearTo: "",
     quantity: "1", sku: "",
   });
+  const [productImages, setProductImages] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadImage = trpc.upload.image.useMutation();
 
   const createProduct = trpc.product.create.useMutation({
     onSuccess: () => {
@@ -44,6 +49,7 @@ export default function VendorDashboard() {
         condition: "new", vehicleMake: "", vehicleModel: "", yearFrom: "", yearTo: "",
         quantity: "1", sku: "",
       });
+      setProductImages([]);
       toast.success("Product listed successfully!");
     },
     onError: (err: { message: string }) => toast.error(err.message),
@@ -91,6 +97,49 @@ export default function VendorDashboard() {
     .filter((o) => o.status !== "cancelled")
     .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    if (productImages.length >= 5) {
+      toast.error("Maximum 5 images per product");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (productImages.length >= 5) break;
+        if (!file.type.startsWith("image/")) {
+          toast.error(`${file.name} is not an image`);
+          continue;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`${file.name} exceeds 5MB limit`);
+          continue;
+        }
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(",")[1]);
+          };
+          reader.readAsDataURL(file);
+        });
+        const result = await uploadImage.mutateAsync({
+          base64,
+          fileName: file.name,
+          contentType: file.type,
+        });
+        setProductImages((prev) => [...prev, result.url]);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleAddProduct = () => {
     if (!productForm.name || !productForm.price) {
       toast.error("Product name and price are required");
@@ -109,6 +158,7 @@ export default function VendorDashboard() {
       yearTo: productForm.yearTo ? Number(productForm.yearTo) : undefined,
       quantity: Number(productForm.quantity) || 1,
       sku: productForm.sku || undefined,
+      images: productImages.length > 0 ? productImages : undefined,
     });
   };
 
@@ -280,6 +330,47 @@ export default function VendorDashboard() {
                         />
                       </div>
                     </div>
+                    {/* Image Upload */}
+                    <div>
+                      <Label className="tracking-wide">Product Images (max 5)</Label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleImageUpload}
+                      />
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {productImages.map((url, i) => (
+                          <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/30">
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setProductImages((prev) => prev.filter((_, j) => j !== i))}
+                              className="absolute top-0 right-0 bg-black/50 rounded-bl-lg p-0.5"
+                            >
+                              <X className="h-3 w-3 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                        {productImages.length < 5 && (
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingImage}
+                            className="w-16 h-16 rounded-xl border-2 border-dashed border-border/40 flex items-center justify-center hover:border-primary/40 transition-colors"
+                          >
+                            {uploadingImage ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            ) : (
+                              <Upload className="h-4 w-4 text-muted-foreground/60" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                     <Button
                       className="w-full text-white rounded-full"
                       disabled={createProduct.isPending}
@@ -350,20 +441,65 @@ export default function VendorDashboard() {
             <h2 className="text-lg font-medium tracking-wide mb-6">Orders</h2>
             {orders.length > 0 ? (
               <div className="space-y-3">
-                {orders.map((order) => (
+                {orders.map((order) => {
+                  const isExpanded = expandedOrder === order.id;
+                  const orderItems = (order as any).items || [];
+                  return (
                   <Card key={order.id} className="zen-card rounded-2xl border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
                     <CardContent className="p-5">
                       <div className="flex items-center justify-between mb-3">
-                        <div>
+                        <div className="flex items-center gap-2">
                           <span className="font-mono text-sm font-medium tracking-wide">{order.orderNumber}</span>
-                          <span className="text-xs text-muted-foreground ml-2 tracking-wide">
+                          <span className="text-xs text-muted-foreground tracking-wide">
                             {new Date(order.createdAt).toLocaleDateString("en-GH")}
                           </span>
                         </div>
-                        <Badge variant={order.status === "delivered" ? "default" : "secondary"} className="capitalize rounded-full">
-                          {order.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={order.status === "delivered" ? "default" : "secondary"} className="capitalize rounded-full">
+                            {order.status}
+                          </Badge>
+                          <button onClick={() => setExpandedOrder(isExpanded ? null : order.id)} className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Buyer info + items (expandable) */}
+                      {isExpanded && (
+                        <div className="mb-4 space-y-3">
+                          <div className="bg-white/30 rounded-xl p-3 text-xs space-y-1.5">
+                            {order.buyerName && (
+                              <div className="flex items-center gap-2 text-muted-foreground/80">
+                                <User className="h-3 w-3" /> <span className="tracking-wide">{order.buyerName}</span>
+                              </div>
+                            )}
+                            {order.buyerPhone && (
+                              <div className="flex items-center gap-2 text-muted-foreground/80">
+                                <PhoneIcon className="h-3 w-3" /> <span className="tracking-wide">{order.buyerPhone}</span>
+                              </div>
+                            )}
+                            {order.shippingAddress && (
+                              <div className="flex items-center gap-2 text-muted-foreground/80">
+                                <MapPin className="h-3 w-3" /> <span className="tracking-wide">{order.shippingAddress}, {order.shippingCity}, {order.shippingRegion}</span>
+                              </div>
+                            )}
+                          </div>
+                          {orderItems.length > 0 && (
+                            <div className="space-y-1.5">
+                              {orderItems.map((item: any) => (
+                                <div key={item.id} className="flex justify-between text-xs tracking-wide px-1">
+                                  <span className="text-muted-foreground/80">{item.productName} × {item.quantity}</span>
+                                  <span className="font-medium">{formatGHS(item.totalPrice)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {order.notes && (
+                            <p className="text-xs text-muted-foreground/60 tracking-wide italic px-1">Note: {order.notes}</p>
+                          )}
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between">
                         <span className="text-primary/90 font-medium tracking-wide">{formatGHS(order.totalAmount)}</span>
                         {order.status === "pending" && (
@@ -418,7 +554,8 @@ export default function VendorDashboard() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <Card className="border-dashed border-white/20 rounded-3xl bg-white/30 backdrop-blur-xl">

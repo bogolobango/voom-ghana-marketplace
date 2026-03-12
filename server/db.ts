@@ -53,6 +53,18 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function updateUserProfile(userId: number, data: { name?: string; email?: string; phone?: string }) {
+  const db = await getDb();
+  if (!db) return;
+  const updateSet: Record<string, any> = {};
+  if (data.name !== undefined) updateSet.name = data.name;
+  if (data.email !== undefined) updateSet.email = data.email;
+  if (data.phone !== undefined) updateSet.phone = data.phone;
+  if (Object.keys(updateSet).length > 0) {
+    await db.update(users).set(updateSet).where(eq(users.id, userId));
+  }
+}
+
 // ─── Category Helpers ───
 export async function getCategories() {
   const db = await getDb();
