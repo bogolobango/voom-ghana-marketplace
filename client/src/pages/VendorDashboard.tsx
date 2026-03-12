@@ -14,6 +14,7 @@ import { formatGHS, VEHICLE_MAKES, PART_CONDITIONS } from "@shared/marketplace";
 import {
   Package, ShoppingCart, Plus, Loader2, Store, TrendingUp,
   Edit, Trash2, Eye, Upload, X, ChevronDown, ChevronUp, User, MapPin, Phone as PhoneIcon,
+  MessageSquare, CheckCircle, XCircle,
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ export default function VendorDashboard() {
   const vendor = trpc.vendor.me.useQuery(undefined, { enabled: isAuthenticated });
   const myProducts = trpc.product.myProducts.useQuery(undefined, { enabled: !!vendor.data && vendor.data.status === "approved" });
   const vendorOrders = trpc.order.vendorOrders.useQuery(undefined, { enabled: !!vendor.data && vendor.data.status === "approved" });
+  const vendorInquiries = trpc.inquiry.vendorInquiries.useQuery(undefined, { enabled: !!vendor.data && vendor.data.status === "approved" });
   const categories = trpc.category.list.useQuery();
   const utils = trpc.useUtils();
 
@@ -32,7 +34,7 @@ export default function VendorDashboard() {
     name: "", description: "", price: "", categoryId: "", brand: "",
     condition: "new" as "new" | "used" | "refurbished",
     vehicleMake: "", vehicleModel: "", yearFrom: "", yearTo: "",
-    quantity: "1", sku: "",
+    quantity: "1", sku: "", oemPartNumber: "",
   });
   const [productImages, setProductImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -47,7 +49,7 @@ export default function VendorDashboard() {
       setProductForm({
         name: "", description: "", price: "", categoryId: "", brand: "",
         condition: "new", vehicleMake: "", vehicleModel: "", yearFrom: "", yearTo: "",
-        quantity: "1", sku: "",
+        quantity: "1", sku: "", oemPartNumber: "",
       });
       setProductImages([]);
       toast.success("Product listed successfully!");
@@ -62,6 +64,11 @@ export default function VendorDashboard() {
   const updateOrderStatus = trpc.order.updateStatus.useMutation({
     onSuccess: () => { utils.order.vendorOrders.invalidate(); toast.success("Order status updated"); },
     onError: (err) => toast.error(err.message),
+  });
+
+  const updateInquiry = trpc.inquiry.updateStatus.useMutation({
+    onSuccess: () => { utils.inquiry.vendorInquiries.invalidate(); toast.success("Inquiry updated"); },
+    onError: (err: { message: string }) => toast.error(err.message),
   });
 
   if (loading || vendor.isLoading) {
@@ -93,6 +100,8 @@ export default function VendorDashboard() {
 
   const products = myProducts.data || [];
   const orders = vendorOrders.data || [];
+  const inquiriesList = vendorInquiries.data || [];
+  const pendingInquiries = inquiriesList.filter(i => i.status === "pending");
   const totalRevenue = orders
     .filter((o) => o.status !== "cancelled")
     .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0);
@@ -158,6 +167,7 @@ export default function VendorDashboard() {
       yearTo: productForm.yearTo ? Number(productForm.yearTo) : undefined,
       quantity: Number(productForm.quantity) || 1,
       sku: productForm.sku || undefined,
+      oemPartNumber: productForm.oemPartNumber || undefined,
       images: productImages.length > 0 ? productImages : undefined,
     });
   };
@@ -184,6 +194,14 @@ export default function VendorDashboard() {
           <TabsList className="mb-6 bg-white/50 backdrop-blur-xl rounded-2xl">
             <TabsTrigger value="products" className="tracking-wide rounded-xl">Products ({products.length})</TabsTrigger>
             <TabsTrigger value="orders" className="tracking-wide rounded-xl">Orders ({orders.length})</TabsTrigger>
+            <TabsTrigger value="inquiries" className="tracking-wide rounded-xl">
+              Inquiries ({inquiriesList.length})
+              {pendingInquiries.length > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold bg-primary text-white rounded-full">
+                  {pendingInquiries.length}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           {/* Products Tab */}
@@ -285,6 +303,15 @@ export default function VendorDashboard() {
                           className="rounded-2xl border-border/30"
                         />
                       </div>
+                    </div>
+                    <div>
+                      <Label className="tracking-wide">OEM Part Number</Label>
+                      <Input
+                        value={productForm.oemPartNumber}
+                        onChange={(e) => setProductForm({ ...productForm, oemPartNumber: e.target.value })}
+                        placeholder="e.g. 04465-33471"
+                        className="rounded-2xl border-border/30"
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -563,6 +590,103 @@ export default function VendorDashboard() {
                   <ShoppingCart className="h-10 w-10 mx-auto mb-4 text-muted-foreground/30" />
                   <p className="font-medium tracking-wide mb-1">No orders yet</p>
                   <p className="text-sm text-muted-foreground tracking-wide">Orders will appear here when buyers purchase your products.</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Inquiries Tab */}
+          <TabsContent value="inquiries">
+            <h2 className="text-lg font-medium tracking-wide mb-6">Buyer Inquiries</h2>
+            {inquiriesList.length > 0 ? (
+              <div className="space-y-3">
+                {inquiriesList.map((inq: any) => {
+                  const INQUIRY_STATUS_COLORS: Record<string, string> = {
+                    pending: "bg-amber-50 text-amber-700 border border-amber-200/40",
+                    responded: "bg-sky-50 text-sky-700 border border-sky-200/40",
+                    sold: "bg-emerald-50 text-emerald-700 border border-emerald-200/40",
+                    closed: "bg-gray-50 text-gray-600 border border-gray-200/40",
+                  };
+                  return (
+                    <Card key={inq.id} className="zen-card rounded-2xl border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+                      <CardContent className="p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <MessageSquare className="h-5 w-5 text-primary/80" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm tracking-wide">{inq.product?.name || "Unknown Product"}</p>
+                              <p className="text-xs text-muted-foreground/70 tracking-wide mt-0.5">
+                                {inq.buyer?.name || "Anonymous"} {inq.buyerPhone && `• ${inq.buyerPhone}`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-medium tracking-wide px-2.5 py-1 rounded-full capitalize ${INQUIRY_STATUS_COLORS[inq.status] || ""}`}>
+                              {inq.status}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground/50 tracking-wide">
+                              {new Date(inq.createdAt).toLocaleDateString("en-GH", { month: "short", day: "numeric" })}
+                            </span>
+                          </div>
+                        </div>
+
+                        {inq.message && (
+                          <p className="text-sm text-muted-foreground/80 tracking-wide mb-3 pl-[52px]">
+                            "{inq.message}"
+                          </p>
+                        )}
+
+                        {inq.product?.price && (
+                          <p className="text-sm text-primary/90 font-medium tracking-wide mb-3 pl-[52px]">
+                            Listed at {formatGHS(inq.product.price)}
+                          </p>
+                        )}
+
+                        {inq.status === "pending" && (
+                          <div className="flex gap-2 pl-[52px]">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-full border-border/30 text-xs"
+                              disabled={updateInquiry.isPending}
+                              onClick={() => updateInquiry.mutate({ id: inq.id, status: "responded" })}
+                            >
+                              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                              Mark Responded
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="rounded-full text-white text-xs"
+                              disabled={updateInquiry.isPending}
+                              onClick={() => updateInquiry.mutate({ id: inq.id, status: "sold" })}
+                            >
+                              Mark Sold
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="rounded-full text-muted-foreground text-xs"
+                              disabled={updateInquiry.isPending}
+                              onClick={() => updateInquiry.mutate({ id: inq.id, status: "closed" })}
+                            >
+                              <XCircle className="h-3.5 w-3.5 mr-1" />
+                              Close
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <Card className="border-dashed border-white/20 rounded-3xl bg-white/30 backdrop-blur-xl">
+                <CardContent className="py-16 text-center">
+                  <MessageSquare className="h-10 w-10 mx-auto mb-4 text-muted-foreground/30" />
+                  <p className="font-medium tracking-wide mb-1">No inquiries yet</p>
+                  <p className="text-sm text-muted-foreground tracking-wide">Buyer inquiries will appear here when they express interest in your products.</p>
                 </CardContent>
               </Card>
             )}

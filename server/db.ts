@@ -2,8 +2,8 @@ import { eq, and, like, desc, asc, sql, or, gte, lte, inArray } from "drizzle-or
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users, vendors, InsertVendor, products, InsertProduct,
-  categories, cartItems, orders, orderItems, reviews, notifications,
-  type Vendor, type Product, type Category, type Order
+  categories, cartItems, orders, orderItems, reviews, notifications, inquiries,
+  type Vendor, type Product, type Category, type Order, type InsertInquiry
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -182,7 +182,8 @@ export async function searchProducts(filters: {
         like(products.name, `%${filters.search}%`),
         like(products.brand, `%${filters.search}%`),
         like(products.vehicleMake, `%${filters.search}%`),
-        like(products.vehicleModel, `%${filters.search}%`)
+        like(products.vehicleModel, `%${filters.search}%`),
+        like(products.oemPartNumber, `%${filters.search}%`)
       )!
     );
   }
@@ -190,6 +191,8 @@ export async function searchProducts(filters: {
   if (filters.vehicleMake) conditions.push(eq(products.vehicleMake, filters.vehicleMake));
   if (filters.vehicleModel) conditions.push(eq(products.vehicleModel, filters.vehicleModel));
   if (filters.condition) conditions.push(eq(products.condition, filters.condition as any));
+  if (filters.yearFrom) conditions.push(lte(products.yearFrom, filters.yearFrom)); // product fits if its range covers the year
+  if (filters.yearTo) conditions.push(gte(products.yearTo, filters.yearTo));
   if (filters.minPrice) conditions.push(gte(products.price, String(filters.minPrice)));
   if (filters.maxPrice) conditions.push(lte(products.price, String(filters.maxPrice)));
 
@@ -561,4 +564,71 @@ export async function incrementVendorSales(vendorId: number) {
   await db.update(vendors)
     .set({ totalSales: sql`${vendors.totalSales} + 1` })
     .where(eq(vendors.id, vendorId));
+}
+
+// ─── Inquiry Helpers ───
+export async function createInquiry(data: {
+  buyerId: number; vendorId: number; productId: number;
+  message?: string; buyerPhone?: string; buyerName?: string;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  const [result] = await db.insert(inquiries).values(data).$returningId();
+  return result;
+}
+
+export async function getVendorInquiries(vendorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const items = await db.select().from(inquiries)
+    .where(eq(inquiries.vendorId, vendorId))
+    .orderBy(desc(inquiries.createdAt));
+  if (items.length === 0) return [];
+  // Include product name and buyer name
+  const productIds = Array.from(new Set(items.map(i => i.productId)));
+  const buyerIds = Array.from(new Set(items.map(i => i.buyerId)));
+  const prods = await db.select({ id: products.id, name: products.name, price: products.price, images: products.images })
+    .from(products).where(inArray(products.id, productIds));
+  const buyers = await db.select({ id: users.id, name: users.name, phone: users.phone })
+    .from(users).where(inArray(users.id, buyerIds));
+  const prodMap = new Map(prods.map(p => [p.id, p]));
+  const buyerMap = new Map(buyers.map(b => [b.id, b]));
+  return items.map(i => ({
+    ...i,
+    product: prodMap.get(i.productId),
+    buyer: buyerMap.get(i.buyerId),
+  }));
+}
+
+export async function getBuyerInquiries(buyerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const items = await db.select().from(inquiries)
+    .where(eq(inquiries.buyerId, buyerId))
+    .orderBy(desc(inquiries.createdAt));
+  if (items.length === 0) return [];
+  const productIds = Array.from(new Set(items.map(i => i.productId)));
+  const prods = await db.select({ id: products.id, name: products.name, price: products.price, images: products.images })
+    .from(products).where(inArray(products.id, productIds));
+  const prodMap = new Map(prods.map(p => [p.id, p]));
+  const vendorIds = Array.from(new Set(items.map(i => i.vendorId)));
+  const vends = await db.select({ id: vendors.id, businessName: vendors.businessName })
+    .from(vendors).where(inArray(vendors.id, vendorIds));
+  const vendorMap = new Map(vends.map(v => [v.id, v]));
+  return items.map(i => ({
+    ...i,
+    product: prodMap.get(i.productId),
+    vendor: vendorMap.get(i.vendorId),
+  }));
+}
+
+export async function updateInquiryStatus(id: number, vendorId: number, status: string, vendorNotes?: string) {
+  const db = await getDb();
+  if (!db) return;
+  const [inquiry] = await db.select().from(inquiries)
+    .where(and(eq(inquiries.id, id), eq(inquiries.vendorId, vendorId))).limit(1);
+  if (!inquiry) throw new Error("Inquiry not found");
+  const updateData: Record<string, any> = { status: status as any };
+  if (vendorNotes !== undefined) updateData.vendorNotes = vendorNotes;
+  await db.update(inquiries).set(updateData).where(eq(inquiries.id, id));
 }

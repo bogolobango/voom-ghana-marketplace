@@ -6,12 +6,14 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { getLoginUrl } from "@/const";
 import ProductCard from "@/components/ProductCard";
+import VehicleSearch from "@/components/VehicleSearch";
 import {
   Search, ArrowRight, ShieldCheck, Truck, MessageCircle,
   Cog, CircleStop, ArrowUpDown, Zap, Car, Settings,
   Wind, Thermometer, Droplets, Lightbulb, Circle, Armchair, Store,
 } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "engine-parts": <Cog className="h-6 w-6" />,
@@ -31,6 +33,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 export default function Home() {
   const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [, navigate] = useLocation();
   const categories = trpc.category.list.useQuery();
   const featured = trpc.product.featured.useQuery();
   const latest = trpc.product.latest.useQuery();
@@ -53,28 +56,42 @@ export default function Home() {
               Search thousands of genuine and affordable car parts from verified vendors across Ghana. From Abossey Okai to your doorstep.
             </p>
 
-            {/* Search Bar — frosted glass capsule */}
+            {/* Vehicle Search — cascading Year → Make → Model */}
+            <div className="max-w-xl">
+              <VehicleSearch
+                variant="hero"
+                onSearch={(filters) => {
+                  const params = new URLSearchParams();
+                  if (filters.make) params.set("make", filters.make);
+                  if (filters.model) params.set("model", filters.model);
+                  if (filters.year) params.set("year", filters.year);
+                  navigate(`/products?${params.toString()}`);
+                }}
+              />
+            </div>
+
+            {/* Text search — OEM / part name */}
             <div className="flex gap-3 max-w-lg">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
                 <Input
-                  placeholder="Search parts, e.g. 'Toyota Camry brake pads'"
-                  className="pl-11 h-13 bg-white/90 text-foreground border-white/30 rounded-[100px] shadow-[0_8px_32px_-6px_rgba(0,0,0,0.12)] backdrop-blur-xl"
+                  placeholder="Or search by part name, OEM number..."
+                  className="pl-11 h-11 bg-white/80 text-foreground border-white/30 rounded-[100px] shadow-[0_4px_16px_-4px_rgba(0,0,0,0.08)] backdrop-blur-xl text-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && searchQuery.trim()) {
-                      window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`;
+                      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
                     }
                   }}
                 />
               </div>
               <Button
-                size="lg"
-                className="h-13 px-7 bg-primary/90 hover:bg-primary text-white rounded-[100px] shadow-[0_8px_32px_-6px_rgba(0,0,0,0.15)]"
+                size="default"
+                className="h-11 px-6 bg-white/20 hover:bg-white/30 text-white rounded-[100px] border border-white/20"
                 onClick={() => {
                   if (searchQuery.trim()) {
-                    window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`;
+                    navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
                   }
                 }}
               >

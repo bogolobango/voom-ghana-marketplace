@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { users, vendors, products, categories, cartItems, orders, orderItems, reviews, notifications } from "./schema";
+import { users, vendors, products, categories, cartItems, orders, orderItems, reviews, notifications, inquiries } from "./schema";
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   vendor: one(vendors, { fields: [users.id], references: [vendors.userId] }),
@@ -7,6 +7,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   orders: many(orders),
   reviews: many(reviews),
   notifications: many(notifications),
+  inquiries: many(inquiries),
 }));
 
 export const vendorsRelations = relations(vendors, ({ one, many }) => ({
@@ -14,6 +15,7 @@ export const vendorsRelations = relations(vendors, ({ one, many }) => ({
   products: many(products),
   orders: many(orders),
   reviews: many(reviews),
+  inquiries: many(inquiries),
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -27,6 +29,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   cartItems: many(cartItems),
   orderItems: many(orderItems),
   reviews: many(reviews),
+  inquiries: many(inquiries),
 }));
 
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
@@ -53,4 +56,10 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, { fields: [notifications.userId], references: [users.id] }),
+}));
+
+export const inquiriesRelations = relations(inquiries, ({ one }) => ({
+  buyer: one(users, { fields: [inquiries.buyerId], references: [users.id] }),
+  vendor: one(vendors, { fields: [inquiries.vendorId], references: [vendors.id] }),
+  product: one(products, { fields: [inquiries.productId], references: [products.id] }),
 }));

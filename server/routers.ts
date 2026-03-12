@@ -160,6 +160,7 @@ export const appRouter = router({
       vehicleModel: z.string().max(100).optional(),
       yearFrom: z.number().min(1900).max(2100).optional(),
       yearTo: z.number().min(1900).max(2100).optional(),
+      oemPartNumber: z.string().max(100).optional(),
       quantity: z.number().min(0).default(0),
       minOrderQty: z.number().min(1).optional(),
       images: z.array(z.string().url()).max(10).optional(),
@@ -186,6 +187,7 @@ export const appRouter = router({
       vehicleModel: z.string().max(100).optional(),
       yearFrom: z.number().min(1900).max(2100).optional(),
       yearTo: z.number().min(1900).max(2100).optional(),
+      oemPartNumber: z.string().max(100).optional(),
       quantity: z.number().min(0).optional(),
       minOrderQty: z.number().min(1).optional(),
       images: z.array(z.string().url()).max(10).optional(),
@@ -454,6 +456,61 @@ export const appRouter = router({
     }),
     vendorReviews: publicProcedure.input(z.object({ vendorId: z.number() })).query(async ({ input }) => {
       return db.getVendorReviews(input.vendorId);
+    }),
+  }),
+
+  // ─── Inquiries ───
+  inquiry: router({
+    create: protectedProcedure.input(z.object({
+      productId: z.number(),
+      vendorId: z.number(),
+      message: z.string().max(2000).optional(),
+      buyerPhone: z.string().max(20).optional(),
+      buyerName: z.string().max(255).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      if (input.buyerPhone && !isValidGhanaPhone(input.buyerPhone)) {
+        throw new Error("Please enter a valid Ghana phone number");
+      }
+      // Validate product exists
+      const product = await db.getProductById(input.productId);
+      if (!product) throw new Error("Product not found");
+      // Validate vendor
+      const vendor = await db.getVendorById(input.vendorId);
+      if (!vendor || vendor.status !== "approved") throw new Error("Vendor not available");
+
+      const result = await db.createInquiry({
+        buyerId: ctx.user.id,
+        vendorId: input.vendorId,
+        productId: input.productId,
+        message: input.message,
+        buyerPhone: input.buyerPhone,
+        buyerName: input.buyerName,
+      });
+
+      // Notify vendor
+      await db.createNotification({
+        userId: vendor.userId,
+        title: "New Inquiry",
+        message: `A buyer is interested in "${product.name}". ${input.message ? `Message: ${input.message.slice(0, 100)}` : "Check your inquiries."}`,
+        type: "inquiry",
+        link: `/vendor/dashboard`,
+      });
+
+      return { success: true, inquiryId: result?.id };
+    }),
+    myInquiries: protectedProcedure.query(async ({ ctx }) => {
+      return db.getBuyerInquiries(ctx.user.id);
+    }),
+    vendorInquiries: vendorProcedure.query(async ({ ctx }) => {
+      return db.getVendorInquiries(ctx.vendor.id);
+    }),
+    updateStatus: vendorProcedure.input(z.object({
+      id: z.number(),
+      status: z.enum(["responded", "sold", "closed"]),
+      vendorNotes: z.string().max(2000).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      await db.updateInquiryStatus(input.id, ctx.vendor.id, input.status, input.vendorNotes);
+      return { success: true };
     }),
   }),
 

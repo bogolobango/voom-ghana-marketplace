@@ -68,6 +68,7 @@ export const products = mysqlTable("products", {
   vehicleModel: varchar("vehicleModel", { length: 100 }),
   yearFrom: int("yearFrom"),
   yearTo: int("yearTo"),
+  oemPartNumber: varchar("oemPartNumber", { length: 100 }),
   // Inventory
   quantity: int("quantity").default(0).notNull(),
   minOrderQty: int("minOrderQty").default(1),
@@ -147,10 +148,27 @@ export const notifications = mysqlTable("notifications", {
   userId: int("userId").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   message: text("message").notNull(),
-  type: mysqlEnum("type", ["order", "vendor", "system", "inventory"]).default("system").notNull(),
+  type: mysqlEnum("type", ["order", "vendor", "system", "inventory", "inquiry"]).default("system").notNull(),
   read: boolean("read").default(false).notNull(),
   link: varchar("link", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type Notification = typeof notifications.$inferSelect;
+
+export const inquiries = mysqlTable("inquiries", {
+  id: int("id").autoincrement().primaryKey(),
+  buyerId: int("buyerId").notNull(),
+  vendorId: int("vendorId").notNull(),
+  productId: int("productId").notNull(),
+  message: text("message"),
+  buyerPhone: varchar("buyerPhone", { length: 20 }),
+  buyerName: varchar("buyerName", { length: 255 }),
+  status: mysqlEnum("status", ["pending", "responded", "sold", "closed"]).default("pending").notNull(),
+  vendorNotes: text("vendorNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Inquiry = typeof inquiries.$inferSelect;
+export type InsertInquiry = typeof inquiries.$inferInsert;

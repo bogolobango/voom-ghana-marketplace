@@ -8,15 +8,20 @@ import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { useSearch } from "wouter";
 import { VEHICLE_MAKES, PART_CONDITIONS } from "@shared/marketplace";
+import { useVehicle } from "@/contexts/VehicleContext";
+
+const YEARS = Array.from({ length: 30 }, (_, i) => String(2026 - i));
 
 export default function Products() {
   const searchParams = new URLSearchParams(useSearch());
+  const { vehicle } = useVehicle();
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [categoryId, setCategoryId] = useState(searchParams.get("categoryId") || "");
-  const [vehicleMake, setVehicleMake] = useState(searchParams.get("make") || "");
-  const [vehicleModel, setVehicleModel] = useState("");
+  const [vehicleMake, setVehicleMake] = useState(searchParams.get("make") || vehicle.make || "");
+  const [vehicleModel, setVehicleModel] = useState(searchParams.get("model") || vehicle.model || "");
+  const [vehicleYear, setVehicleYear] = useState(searchParams.get("year") || vehicle.year || "");
   const [condition, setCondition] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(!!(searchParams.get("make") || vehicle.make));
   const [page, setPage] = useState(0);
 
   const categories = trpc.category.list.useQuery();
@@ -27,20 +32,23 @@ export default function Products() {
     categoryId: categoryId ? Number(categoryId) : undefined,
     vehicleMake: vehicleMake || undefined,
     vehicleModel: vehicleModel || undefined,
+    yearFrom: vehicleYear ? Number(vehicleYear) : undefined,
+    yearTo: vehicleYear ? Number(vehicleYear) : undefined,
     condition: condition || undefined,
     limit: 20,
     offset: page * 20,
-  }), [search, categoryId, vehicleMake, vehicleModel, condition, page]);
+  }), [search, categoryId, vehicleMake, vehicleModel, vehicleYear, condition, page]);
 
   const products = trpc.product.search.useQuery(filters);
 
-  const hasActiveFilters = !!(search || categoryId || vehicleMake || vehicleModel || condition);
+  const hasActiveFilters = !!(search || categoryId || vehicleMake || vehicleModel || vehicleYear || condition);
 
   const clearFilters = () => {
     setSearch("");
     setCategoryId("");
     setVehicleMake("");
     setVehicleModel("");
+    setVehicleYear("");
     setCondition("");
     setPage(0);
   };
@@ -72,12 +80,12 @@ export default function Products() {
 
           {/* Filters Panel */}
           {showFilters && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 pt-5 border-t border-white/20">
-              <Select value={categoryId} onValueChange={(v) => { setCategoryId(v); setPage(0); }}>
-                <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Category" /></SelectTrigger>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-5 pt-5 border-t border-white/20">
+              <Select value={vehicleYear} onValueChange={(v) => { setVehicleYear(v); setPage(0); }}>
+                <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Year" /></SelectTrigger>
                 <SelectContent>
-                  {(categories.data || []).map((cat) => (
-                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                  {YEARS.map((y) => (
+                    <SelectItem key={y} value={y}>{y}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -100,6 +108,15 @@ export default function Products() {
                 </SelectContent>
               </Select>
 
+              <Select value={categoryId} onValueChange={(v) => { setCategoryId(v); setPage(0); }}>
+                <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Category" /></SelectTrigger>
+                <SelectContent>
+                  {(categories.data || []).map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select value={condition} onValueChange={(v) => { setCondition(v); setPage(0); }}>
                 <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Condition" /></SelectTrigger>
                 <SelectContent>
@@ -116,6 +133,7 @@ export default function Products() {
             <div className="flex items-center gap-2 mt-4 flex-wrap">
               <span className="text-xs text-muted-foreground tracking-wide">Active filters:</span>
               {search && <FilterTag label={`"${search}"`} onRemove={() => setSearch("")} />}
+              {vehicleYear && <FilterTag label={`Year: ${vehicleYear}`} onRemove={() => setVehicleYear("")} />}
               {categoryId && (
                 <FilterTag
                   label={categories.data?.find(c => String(c.id) === categoryId)?.name || "Category"}
