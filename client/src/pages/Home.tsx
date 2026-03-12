@@ -106,8 +106,18 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Categories + Recently Added — shared blurred background */}
+      <div className="relative overflow-hidden" style={{
+        backgroundImage: "url('/categories-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}>
+        {/* Blur + white overlay */}
+        <div className="absolute inset-0 backdrop-blur-2xl" style={{ background: "rgba(255,255,255,0.82)" }} />
+
       {/* Categories Grid — glassmorphism tiles */}
-      <section className="zen-section">
+      <section className="zen-section relative">
         <div className="container">
           <div className="flex items-center justify-between mb-10">
             <div>
@@ -139,7 +149,7 @@ export default function Home() {
 
       {/* Featured Products */}
       {(featured.data?.length || 0) > 0 && (
-        <section className="zen-section" style={{ background: "rgba(255,255,255,0.25)" }}>
+        <section className="zen-section relative">
           <div className="container">
             <div className="flex items-center justify-between mb-10">
               <div>
@@ -162,7 +172,7 @@ export default function Home() {
       )}
 
       {/* Latest Products */}
-      <section className="zen-section">
+      <section className="zen-section relative">
         <div className="container">
           <div className="flex items-center justify-between mb-10">
             <div>
@@ -201,6 +211,7 @@ export default function Home() {
           )}
         </div>
       </section>
+      </div>{/* end blurred bg wrapper */}
 
       {/* Value Props — atmospheric dark section */}
       <section className="zen-hero zen-section">
