@@ -46,7 +46,7 @@ export default function VendorDashboard() {
       });
       toast.success("Product listed successfully!");
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err: { message: string }) => toast.error(err.message),
   });
 
   const deleteProduct = trpc.product.delete.useMutation({
@@ -55,6 +55,7 @@ export default function VendorDashboard() {
 
   const updateOrderStatus = trpc.order.updateStatus.useMutation({
     onSuccess: () => { utils.order.vendorOrders.invalidate(); toast.success("Order status updated"); },
+    onError: (err) => toast.error(err.message),
   });
 
   if (loading || vendor.isLoading) {

@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { formatGHS } from "@shared/marketplace";
-import { Package, Loader2, ShoppingCart } from "lucide-react";
+import { Package, Loader2, ShoppingCart, XCircle } from "lucide-react";
+import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700 border border-amber-200/40",
@@ -19,6 +20,13 @@ const STATUS_COLORS: Record<string, string> = {
 export default function Orders() {
   const { isAuthenticated, loading } = useAuth();
   const orders = trpc.order.myOrders.useQuery(undefined, { enabled: isAuthenticated });
+  const cancelOrder = trpc.order.cancel.useMutation({
+    onSuccess: () => {
+      toast.success("Order cancelled successfully");
+      orders.refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   if (loading) {
     return (
@@ -66,11 +74,29 @@ export default function Orders() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-primary font-medium tracking-wide text-lg">{formatGHS(order.totalAmount)}</span>
-                    {order.shippingCity && (
-                      <span className="text-xs text-muted-foreground/60 tracking-wide">
-                        Ship to: {order.shippingCity}, {order.shippingRegion}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {order.shippingCity && (
+                        <span className="text-xs text-muted-foreground/60 tracking-wide">
+                          Ship to: {order.shippingCity}, {order.shippingRegion}
+                        </span>
+                      )}
+                      {order.status === "pending" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full text-rose-600 border-rose-200/50 hover:bg-rose-50/50 text-xs"
+                          disabled={cancelOrder.isPending}
+                          onClick={() => {
+                            if (confirm("Are you sure you want to cancel this order?")) {
+                              cancelOrder.mutate({ id: order.id });
+                            }
+                          }}
+                        >
+                          <XCircle className="h-3.5 w-3.5 mr-1" />
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -31,6 +31,35 @@ export const ORDER_STATUSES = [
   { value: "cancelled", label: "Cancelled", color: "red" },
 ];
 
+// Valid order status transitions — key is current status, value is allowed next statuses
+export const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
+  pending: ["confirmed", "cancelled"],
+  confirmed: ["processing", "cancelled"],
+  processing: ["shipped", "cancelled"],
+  shipped: ["delivered"],
+  delivered: [],
+  cancelled: [],
+};
+
+export function isValidStatusTransition(from: string, to: string): boolean {
+  return VALID_STATUS_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+export const PAYMENT_METHODS = [
+  { value: "pay_on_delivery", label: "Pay on Delivery" },
+  { value: "bank_transfer", label: "Bank Transfer" },
+  { value: "mobile_money", label: "Mobile Money (MoMo)" },
+] as const;
+
+export type PaymentMethod = "pay_on_delivery" | "bank_transfer" | "mobile_money";
+export type PaymentStatus = "unpaid" | "paid" | "refunded";
+
+// Ghana phone number validation (must be 10 digits starting with 0, or 12 digits starting with 233)
+export function isValidGhanaPhone(phone: string): boolean {
+  const cleaned = phone.replace(/[\s\-()]/g, "");
+  return /^0[2-9]\d{8}$/.test(cleaned) || /^233[2-9]\d{8}$/.test(cleaned);
+}
+
 export function formatGHS(amount: string | number): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   return `GH₵${num.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

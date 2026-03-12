@@ -136,7 +136,8 @@ export async function updateProduct(id: number, data: Partial<InsertProduct>) {
 export async function deleteProduct(id: number) {
   const db = await getDb();
   if (!db) return;
-  await db.delete(products).where(eq(products.id, id));
+  // Soft-delete: set to inactive instead of hard delete, preserving order history
+  await db.update(products).set({ status: "inactive" }).where(eq(products.id, id));
 }
 
 export async function getVendorProducts(vendorId: number) {
@@ -181,7 +182,7 @@ export async function searchProducts(filters: {
   if (filters.maxPrice) conditions.push(lte(products.price, String(filters.maxPrice)));
 
   const where = and(...conditions);
-  const limit = filters.limit || 20;
+  const limit = Math.min(filters.limit || 20, 100); // Cap at 100
   const offset = filters.offset || 0;
 
   const [items, countResult] = await Promise.all([
@@ -241,26 +242,55 @@ export async function getCartItems(userId: number) {
 export async function addToCart(userId: number, productId: number, quantity: number) {
   const db = await getDb();
   if (!db) return;
+
+  // Validate product exists and is active
+  const product = await db.select().from(products).where(eq(products.id, productId)).limit(1);
+  if (!product[0]) throw new Error("Product not found");
+  if (product[0].status !== "active") throw new Error("Product is not available");
+
+  // Check stock
   const existing = await db.select().from(cartItems)
     .where(and(eq(cartItems.userId, userId), eq(cartItems.productId, productId))).limit(1);
+  const currentQty = existing.length > 0 ? existing[0].quantity : 0;
+  const requestedTotal = currentQty + quantity;
+
+  if (requestedTotal > product[0].quantity) {
+    throw new Error(`Only ${product[0].quantity} units available in stock`);
+  }
+
+  if (product[0].minOrderQty && quantity < product[0].minOrderQty) {
+    throw new Error(`Minimum order quantity is ${product[0].minOrderQty}`);
+  }
+
   if (existing.length > 0) {
-    await db.update(cartItems).set({ quantity: existing[0].quantity + quantity })
+    await db.update(cartItems).set({ quantity: requestedTotal })
       .where(eq(cartItems.id, existing[0].id));
   } else {
     await db.insert(cartItems).values({ userId, productId, quantity });
   }
 }
 
-export async function updateCartItem(id: number, quantity: number) {
+export async function updateCartItem(id: number, quantity: number, userId: number) {
   const db = await getDb();
   if (!db) return;
+
+  // Verify ownership
+  const item = await db.select().from(cartItems).where(and(eq(cartItems.id, id), eq(cartItems.userId, userId))).limit(1);
+  if (!item[0]) throw new Error("Cart item not found");
+
+  // Validate stock
+  const product = await db.select().from(products).where(eq(products.id, item[0].productId)).limit(1);
+  if (!product[0] || product[0].status !== "active") throw new Error("Product is no longer available");
+  if (quantity > product[0].quantity) throw new Error(`Only ${product[0].quantity} units available`);
+
   await db.update(cartItems).set({ quantity }).where(eq(cartItems.id, id));
 }
 
-export async function removeCartItem(id: number) {
+export async function removeCartItem(id: number, userId: number) {
   const db = await getDb();
   if (!db) return;
-  await db.delete(cartItems).where(eq(cartItems.id, id));
+  // Only delete if owned by user
+  await db.delete(cartItems).where(and(eq(cartItems.id, id), eq(cartItems.userId, userId)));
 }
 
 export async function clearCart(userId: number) {
@@ -272,16 +302,75 @@ export async function clearCart(userId: number) {
 // ─── Order Helpers ───
 export async function createOrder(data: {
   orderNumber: string; userId: number; vendorId: number; totalAmount: string;
+  paymentMethod?: string;
   shippingAddress?: string; shippingCity?: string; shippingRegion?: string;
   buyerPhone?: string; buyerName?: string; notes?: string;
   items: { productId: number; productName: string; quantity: number; unitPrice: string; totalPrice: string }[];
 }) {
   const db = await getDb();
   if (!db) return;
+
   const { items, ...orderData } = data;
-  const [result] = await db.insert(orders).values(orderData).$returningId();
-  if (result && items.length > 0) {
-    await db.insert(orderItems).values(items.map(item => ({ ...item, orderId: result.id })));
+
+  // Validate inventory and compute verified totals
+  const productIds = items.map(i => i.productId);
+  const prods = await db.select().from(products).where(inArray(products.id, productIds));
+  const prodMap = new Map(prods.map(p => [p.id, p]));
+
+  let verifiedTotal = 0;
+  const verifiedItems: typeof items = [];
+
+  for (const item of items) {
+    const product = prodMap.get(item.productId);
+    if (!product) throw new Error(`Product "${item.productName}" is no longer available`);
+    if (product.status !== "active") throw new Error(`Product "${product.name}" is not available for purchase`);
+    if (item.quantity > product.quantity) {
+      throw new Error(`Insufficient stock for "${product.name}": only ${product.quantity} available`);
+    }
+    if (product.minOrderQty && item.quantity < product.minOrderQty) {
+      throw new Error(`Minimum order quantity for "${product.name}" is ${product.minOrderQty}`);
+    }
+
+    // Use server-side price (prevent price manipulation)
+    const serverUnitPrice = product.price;
+    const serverTotalPrice = (parseFloat(serverUnitPrice) * item.quantity).toFixed(2);
+    verifiedTotal += parseFloat(serverTotalPrice);
+    verifiedItems.push({
+      ...item,
+      unitPrice: serverUnitPrice,
+      totalPrice: serverTotalPrice,
+    });
+  }
+
+  const serverTotalAmount = verifiedTotal.toFixed(2);
+  const statusHistory = [{ status: "pending", at: new Date().toISOString() }];
+
+  // Insert order
+  const [result] = await db.insert(orders).values({
+    ...orderData,
+    totalAmount: serverTotalAmount,
+    paymentMethod: (orderData.paymentMethod || "pay_on_delivery") as any,
+    statusHistory,
+  }).$returningId();
+
+  if (result && verifiedItems.length > 0) {
+    // Insert order items
+    await db.insert(orderItems).values(verifiedItems.map(item => ({ ...item, orderId: result.id })));
+
+    // Decrement inventory
+    for (const item of verifiedItems) {
+      await db.update(products)
+        .set({ quantity: sql`${products.quantity} - ${item.quantity}` })
+        .where(eq(products.id, item.productId));
+    }
+
+    // Auto-mark out of stock products
+    await db.update(products)
+      .set({ status: "out_of_stock" })
+      .where(and(
+        inArray(products.id, productIds),
+        lte(products.quantity, 0)
+      ));
   }
   return result;
 }
@@ -289,13 +378,32 @@ export async function createOrder(data: {
 export async function getUserOrders(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  const userOrders = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  // Include items for each order
+  if (userOrders.length === 0) return [];
+  const orderIds = userOrders.map(o => o.id);
+  const allItems = await db.select().from(orderItems).where(inArray(orderItems.orderId, orderIds));
+  const itemsByOrder = new Map<number, typeof allItems>();
+  for (const item of allItems) {
+    if (!itemsByOrder.has(item.orderId)) itemsByOrder.set(item.orderId, []);
+    itemsByOrder.get(item.orderId)!.push(item);
+  }
+  return userOrders.map(o => ({ ...o, items: itemsByOrder.get(o.id) || [] }));
 }
 
 export async function getVendorOrders(vendorId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orders).where(eq(orders.vendorId, vendorId)).orderBy(desc(orders.createdAt));
+  const vendorOrderList = await db.select().from(orders).where(eq(orders.vendorId, vendorId)).orderBy(desc(orders.createdAt));
+  if (vendorOrderList.length === 0) return [];
+  const orderIds = vendorOrderList.map(o => o.id);
+  const allItems = await db.select().from(orderItems).where(inArray(orderItems.orderId, orderIds));
+  const itemsByOrder = new Map<number, typeof allItems>();
+  for (const item of allItems) {
+    if (!itemsByOrder.has(item.orderId)) itemsByOrder.set(item.orderId, []);
+    itemsByOrder.get(item.orderId)!.push(item);
+  }
+  return vendorOrderList.map(o => ({ ...o, items: itemsByOrder.get(o.id) || [] }));
 }
 
 export async function getOrderById(id: number) {
@@ -307,16 +415,34 @@ export async function getOrderById(id: number) {
   return { ...order, items };
 }
 
-export async function updateOrderStatus(id: number, status: string) {
+export async function updateOrderStatus(id: number, status: string, statusHistory?: { status: string; at: string; by?: string }[]) {
   const db = await getDb();
   if (!db) return;
-  await db.update(orders).set({ status: status as any }).where(eq(orders.id, id));
+  const updateData: Record<string, any> = { status: status as any };
+  if (statusHistory) updateData.statusHistory = statusHistory;
+  await db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 
 export async function getAllOrders() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(orders).orderBy(desc(orders.createdAt));
+}
+
+// Restore inventory when an order is cancelled
+export async function restoreInventory(orderId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  for (const item of items) {
+    await db.update(products)
+      .set({ quantity: sql`${products.quantity} + ${item.quantity}` })
+      .where(eq(products.id, item.productId));
+    // Re-activate if it was out_of_stock
+    await db.update(products)
+      .set({ status: "active" })
+      .where(and(eq(products.id, item.productId), eq(products.status, "out_of_stock")));
+  }
 }
 
 // ─── Notification Helpers ───
@@ -332,10 +458,11 @@ export async function getUserNotifications(userId: number) {
   return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt)).limit(50);
 }
 
-export async function markNotificationRead(id: number) {
+export async function markNotificationRead(id: number, userId: number) {
   const db = await getDb();
   if (!db) return;
-  await db.update(notifications).set({ read: true }).where(eq(notifications.id, id));
+  // Only mark if owned by user
+  await db.update(notifications).set({ read: true }).where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
 }
 
 export async function markAllNotificationsRead(userId: number) {
@@ -348,13 +475,51 @@ export async function markAllNotificationsRead(userId: number) {
 export async function createReview(data: { userId: number; vendorId: number; productId?: number; rating: number; comment?: string }) {
   const db = await getDb();
   if (!db) return;
+
+  // Check if user has purchased from this vendor
+  const userOrders = await db.select().from(orders).where(
+    and(
+      eq(orders.userId, data.userId),
+      eq(orders.vendorId, data.vendorId),
+      eq(orders.status, "delivered")
+    )
+  ).limit(1);
+  if (userOrders.length === 0) {
+    throw new Error("You can only review vendors you have purchased from");
+  }
+
+  // Check for duplicate review
+  const existingReview = await db.select().from(reviews).where(
+    and(
+      eq(reviews.userId, data.userId),
+      eq(reviews.vendorId, data.vendorId),
+      data.productId ? eq(reviews.productId, data.productId) : sql`${reviews.productId} IS NULL`
+    )
+  ).limit(1);
+  if (existingReview.length > 0) {
+    throw new Error("You have already reviewed this vendor");
+  }
+
   await db.insert(reviews).values(data);
+
+  // Update vendor rating average
+  const allReviews = await db.select({ rating: reviews.rating }).from(reviews).where(eq(reviews.vendorId, data.vendorId));
+  if (allReviews.length > 0) {
+    const avg = (allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length).toFixed(2);
+    await db.update(vendors).set({ rating: avg }).where(eq(vendors.id, data.vendorId));
+  }
 }
 
 export async function getVendorReviews(vendorId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(reviews).where(eq(reviews.vendorId, vendorId)).orderBy(desc(reviews.createdAt));
+  const vendorReviews = await db.select().from(reviews).where(eq(reviews.vendorId, vendorId)).orderBy(desc(reviews.createdAt));
+  if (vendorReviews.length === 0) return [];
+  // Include reviewer names
+  const userIds = vendorReviews.map(r => r.userId);
+  const reviewUsers = await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, userIds));
+  const userMap = new Map(reviewUsers.map(u => [u.id, u.name]));
+  return vendorReviews.map(r => ({ ...r, userName: userMap.get(r.userId) || "Anonymous" }));
 }
 
 // ─── Admin Stats ───
@@ -375,4 +540,13 @@ export async function getAdminStats() {
     pendingVendors: Number(pendingCount?.count || 0),
     totalRevenue: String(revenueResult?.total || "0"),
   };
+}
+
+// ─── Vendor Sales Tracking ───
+export async function incrementVendorSales(vendorId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(vendors)
+    .set({ totalSales: sql`${vendors.totalSales} + 1` })
+    .where(eq(vendors.id, vendorId));
 }

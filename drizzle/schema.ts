@@ -101,6 +101,8 @@ export const orders = mysqlTable("orders", {
   userId: int("userId").notNull(),
   vendorId: int("vendorId").notNull(),
   status: mysqlEnum("status", ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]).default("pending").notNull(),
+  paymentMethod: mysqlEnum("paymentMethod", ["pay_on_delivery", "bank_transfer", "mobile_money"]).default("pay_on_delivery").notNull(),
+  paymentStatus: mysqlEnum("paymentStatus", ["unpaid", "paid", "refunded"]).default("unpaid").notNull(),
   totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("GHS").notNull(),
   shippingAddress: text("shippingAddress"),
@@ -109,6 +111,7 @@ export const orders = mysqlTable("orders", {
   buyerPhone: varchar("buyerPhone", { length: 20 }),
   buyerName: varchar("buyerName", { length: 255 }),
   notes: text("notes"),
+  statusHistory: json("statusHistory").$type<{ status: string; at: string; by?: string }[]>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

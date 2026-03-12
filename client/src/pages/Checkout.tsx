@@ -8,8 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { formatGHS, generateWhatsAppLink, GHANA_REGIONS, GHANA_CITIES } from "@shared/marketplace";
-import { MessageCircle, Loader2, CheckCircle2, Package } from "lucide-react";
+import { formatGHS, generateWhatsAppLink, GHANA_REGIONS, GHANA_CITIES, PAYMENT_METHODS } from "@shared/marketplace";
+import { MessageCircle, Loader2, CheckCircle2, Package, Banknote, Building2, Smartphone } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -26,6 +26,7 @@ export default function Checkout() {
     shippingAddress: "",
     shippingCity: "",
     shippingRegion: "",
+    paymentMethod: "pay_on_delivery" as "pay_on_delivery" | "bank_transfer" | "mobile_money",
     notes: "",
   });
   const [orderCreated, setOrderCreated] = useState<{ orderNumber: string; whatsappLink: string } | null>(null);
@@ -47,9 +48,19 @@ export default function Checkout() {
     }
   });
 
+  const paymentIcons = {
+    pay_on_delivery: Banknote,
+    bank_transfer: Building2,
+    mobile_money: Smartphone,
+  };
+
   const handleSubmit = async () => {
     if (!form.buyerName || !form.buyerPhone) {
       toast.error("Please fill in your name and phone number");
+      return;
+    }
+    if (!form.shippingAddress || !form.shippingCity || !form.shippingRegion) {
+      toast.error("Please fill in your shipping address");
       return;
     }
 
@@ -217,6 +228,35 @@ export default function Checkout() {
                     rows={3}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="zen-card glass rounded-2xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+              <CardHeader className="pb-4">
+                <CardTitle className="font-medium tracking-wide">Payment Method</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {PAYMENT_METHODS.map((method) => {
+                  const Icon = paymentIcons[method.value];
+                  const isSelected = form.paymentMethod === method.value;
+                  return (
+                    <button
+                      key={method.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, paymentMethod: method.value })}
+                      className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all ${
+                        isSelected
+                          ? "border-primary/40 bg-primary/5 shadow-sm"
+                          : "border-white/20 bg-white/30 hover:bg-white/40"
+                      }`}
+                    >
+                      <Icon className={`h-5 w-5 ${isSelected ? "text-primary" : "text-muted-foreground/60"}`} />
+                      <span className={`tracking-wide text-sm ${isSelected ? "font-medium" : "text-muted-foreground/80"}`}>
+                        {method.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </CardContent>
             </Card>
           </div>

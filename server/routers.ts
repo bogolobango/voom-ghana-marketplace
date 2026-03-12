@@ -1,4 +1,5 @@
 import { COOKIE_NAME } from "@shared/const";
+import { isValidStatusTransition, isValidGhanaPhone } from "@shared/marketplace";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
@@ -38,10 +39,10 @@ export const appRouter = router({
       return db.getCategories();
     }),
     create: adminProcedure.input(z.object({
-      name: z.string().min(1),
-      slug: z.string().min(1),
-      icon: z.string().optional(),
-      parentId: z.number().optional(),
+      name: z.string().min(1).max(100),
+      slug: z.string().min(1).max(100),
+      icon: z.string().max(50).optional(),
+      parentId: z.number().positive().optional(),
     })).mutation(async ({ input }) => {
       await db.createCategory(input);
       return { success: true };
@@ -51,21 +52,27 @@ export const appRouter = router({
   // ─── Vendors ───
   vendor: router({
     register: protectedProcedure.input(z.object({
-      businessName: z.string().min(1),
-      description: z.string().optional(),
-      phone: z.string().min(1),
-      whatsapp: z.string().optional(),
-      email: z.string().optional(),
-      address: z.string().optional(),
-      city: z.string().optional(),
-      region: z.string().optional(),
+      businessName: z.string().min(1).max(255),
+      description: z.string().max(2000).optional(),
+      phone: z.string().min(1).max(20),
+      whatsapp: z.string().max(20).optional(),
+      email: z.string().email().max(320).optional(),
+      address: z.string().max(500).optional(),
+      city: z.string().max(100).optional(),
+      region: z.string().max(100).optional(),
       latitude: z.string().optional(),
       longitude: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
       const existing = await db.getVendorByUserId(ctx.user.id);
       if (existing) throw new Error("You already have a vendor profile");
+
+      // Validate Ghana phone
+      if (!isValidGhanaPhone(input.phone)) {
+        throw new Error("Please enter a valid Ghana phone number (e.g. 0241234567)");
+      }
+
       const result = await db.createVendor({ ...input, userId: ctx.user.id });
-      return { success: true, vendorId: result?.id };
+      return { success: true, vendorId: result?.id, status: "pending" as const };
     }),
     me: protectedProcedure.query(async ({ ctx }) => {
       return db.getVendorByUserId(ctx.user.id);
@@ -77,21 +84,26 @@ export const appRouter = router({
       return db.getApprovedVendors();
     }),
     update: protectedProcedure.input(z.object({
-      businessName: z.string().optional(),
-      description: z.string().optional(),
-      phone: z.string().optional(),
-      whatsapp: z.string().optional(),
-      email: z.string().optional(),
-      address: z.string().optional(),
-      city: z.string().optional(),
-      region: z.string().optional(),
+      businessName: z.string().min(1).max(255).optional(),
+      description: z.string().max(2000).optional(),
+      phone: z.string().max(20).optional(),
+      whatsapp: z.string().max(20).optional(),
+      email: z.string().email().max(320).optional(),
+      address: z.string().max(500).optional(),
+      city: z.string().max(100).optional(),
+      region: z.string().max(100).optional(),
       latitude: z.string().optional(),
       longitude: z.string().optional(),
-      logoUrl: z.string().optional(),
-      coverUrl: z.string().optional(),
+      logoUrl: z.string().url().optional(),
+      coverUrl: z.string().url().optional(),
     })).mutation(async ({ ctx, input }) => {
       const vendor = await db.getVendorByUserId(ctx.user.id);
       if (!vendor) throw new Error("Vendor profile not found");
+
+      if (input.phone && !isValidGhanaPhone(input.phone)) {
+        throw new Error("Please enter a valid Ghana phone number");
+      }
+
       await db.updateVendor(vendor.id, input);
       return { success: true };
     }),
@@ -100,40 +112,49 @@ export const appRouter = router({
   // ─── Products ───
   product: router({
     create: vendorProcedure.input(z.object({
-      name: z.string().min(1),
-      description: z.string().optional(),
-      price: z.string().min(1),
-      categoryId: z.number().optional(),
-      sku: z.string().optional(),
-      brand: z.string().optional(),
+      name: z.string().min(1).max(255),
+      description: z.string().max(5000).optional(),
+      price: z.string().min(1).refine(
+        (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+        { message: "Price must be a positive number" }
+      ),
+      categoryId: z.number().positive().optional(),
+      sku: z.string().max(100).optional(),
+      brand: z.string().max(100).optional(),
       condition: z.enum(["new", "used", "refurbished"]).optional(),
-      vehicleMake: z.string().optional(),
-      vehicleModel: z.string().optional(),
-      yearFrom: z.number().optional(),
-      yearTo: z.number().optional(),
-      quantity: z.number().optional(),
-      minOrderQty: z.number().optional(),
-      images: z.array(z.string()).optional(),
+      vehicleMake: z.string().max(100).optional(),
+      vehicleModel: z.string().max(100).optional(),
+      yearFrom: z.number().min(1900).max(2100).optional(),
+      yearTo: z.number().min(1900).max(2100).optional(),
+      quantity: z.number().min(0).default(0),
+      minOrderQty: z.number().min(1).optional(),
+      images: z.array(z.string().url()).max(10).optional(),
     })).mutation(async ({ ctx, input }) => {
+      if (input.yearFrom && input.yearTo && input.yearFrom > input.yearTo) {
+        throw new Error("yearFrom must be less than or equal to yearTo");
+      }
       const result = await db.createProduct({ ...input, vendorId: ctx.vendor.id });
       return { success: true, productId: result?.id };
     }),
     update: vendorProcedure.input(z.object({
       id: z.number(),
-      name: z.string().optional(),
-      description: z.string().optional(),
-      price: z.string().optional(),
-      categoryId: z.number().optional(),
-      sku: z.string().optional(),
-      brand: z.string().optional(),
+      name: z.string().min(1).max(255).optional(),
+      description: z.string().max(5000).optional(),
+      price: z.string().refine(
+        (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+        { message: "Price must be a positive number" }
+      ).optional(),
+      categoryId: z.number().positive().optional(),
+      sku: z.string().max(100).optional(),
+      brand: z.string().max(100).optional(),
       condition: z.enum(["new", "used", "refurbished"]).optional(),
-      vehicleMake: z.string().optional(),
-      vehicleModel: z.string().optional(),
-      yearFrom: z.number().optional(),
-      yearTo: z.number().optional(),
-      quantity: z.number().optional(),
-      minOrderQty: z.number().optional(),
-      images: z.array(z.string()).optional(),
+      vehicleMake: z.string().max(100).optional(),
+      vehicleModel: z.string().max(100).optional(),
+      yearFrom: z.number().min(1900).max(2100).optional(),
+      yearTo: z.number().min(1900).max(2100).optional(),
+      quantity: z.number().min(0).optional(),
+      minOrderQty: z.number().min(1).optional(),
+      images: z.array(z.string().url()).max(10).optional(),
       status: z.enum(["active", "inactive", "out_of_stock"]).optional(),
     })).mutation(async ({ ctx, input }) => {
       const product = await db.getProductById(input.id);
@@ -158,17 +179,17 @@ export const appRouter = router({
       return db.getVendorProducts(ctx.vendor.id);
     }),
     search: publicProcedure.input(z.object({
-      search: z.string().optional(),
+      search: z.string().max(200).optional(),
       categoryId: z.number().optional(),
-      vehicleMake: z.string().optional(),
-      vehicleModel: z.string().optional(),
+      vehicleMake: z.string().max(100).optional(),
+      vehicleModel: z.string().max(100).optional(),
       yearFrom: z.number().optional(),
       yearTo: z.number().optional(),
       condition: z.string().optional(),
-      minPrice: z.number().optional(),
-      maxPrice: z.number().optional(),
-      limit: z.number().optional(),
-      offset: z.number().optional(),
+      minPrice: z.number().min(0).optional(),
+      maxPrice: z.number().min(0).optional(),
+      limit: z.number().min(1).max(100).optional(),
+      offset: z.number().min(0).optional(),
     })).query(async ({ input }) => {
       return db.searchProducts(input);
     }),
@@ -193,20 +214,20 @@ export const appRouter = router({
     }),
     add: protectedProcedure.input(z.object({
       productId: z.number(),
-      quantity: z.number().min(1).default(1),
+      quantity: z.number().min(1).max(999).default(1),
     })).mutation(async ({ ctx, input }) => {
       await db.addToCart(ctx.user.id, input.productId, input.quantity);
       return { success: true };
     }),
     update: protectedProcedure.input(z.object({
       id: z.number(),
-      quantity: z.number().min(1),
-    })).mutation(async ({ input }) => {
-      await db.updateCartItem(input.id, input.quantity);
+      quantity: z.number().min(1).max(999),
+    })).mutation(async ({ ctx, input }) => {
+      await db.updateCartItem(input.id, input.quantity, ctx.user.id);
       return { success: true };
     }),
-    remove: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
-      await db.removeCartItem(input.id);
+    remove: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.removeCartItem(input.id, ctx.user.id);
       return { success: true };
     }),
     clear: protectedProcedure.mutation(async ({ ctx }) => {
@@ -219,40 +240,60 @@ export const appRouter = router({
   order: router({
     create: protectedProcedure.input(z.object({
       vendorId: z.number(),
-      shippingAddress: z.string().optional(),
-      shippingCity: z.string().optional(),
-      shippingRegion: z.string().optional(),
-      buyerPhone: z.string().optional(),
-      buyerName: z.string().optional(),
-      notes: z.string().optional(),
+      paymentMethod: z.enum(["pay_on_delivery", "bank_transfer", "mobile_money"]).default("pay_on_delivery"),
+      shippingAddress: z.string().min(1, "Shipping address is required").max(500),
+      shippingCity: z.string().min(1, "City is required").max(100),
+      shippingRegion: z.string().min(1, "Region is required").max(100),
+      buyerPhone: z.string().min(1, "Phone number is required").max(20),
+      buyerName: z.string().min(1, "Name is required").max(255),
+      notes: z.string().max(1000).optional(),
       items: z.array(z.object({
         productId: z.number(),
         productName: z.string(),
-        quantity: z.number(),
+        quantity: z.number().min(1),
         unitPrice: z.string(),
         totalPrice: z.string(),
-      })),
+      })).min(1, "Order must have at least one item"),
     })).mutation(async ({ ctx, input }) => {
+      // Validate phone
+      if (!isValidGhanaPhone(input.buyerPhone)) {
+        throw new Error("Please enter a valid Ghana phone number");
+      }
+
+      // Validate vendor exists and is approved
+      const vendor = await db.getVendorById(input.vendorId);
+      if (!vendor || vendor.status !== "approved") {
+        throw new Error("Vendor is not available");
+      }
+
       const orderNumber = `VOM-${nanoid(8).toUpperCase()}`;
-      const totalAmount = input.items.reduce((sum, item) => sum + parseFloat(item.totalPrice), 0).toFixed(2);
       const { items, ...rest } = input;
+
+      // createOrder now handles inventory validation, price verification, and stock decrement
       const result = await db.createOrder({
         orderNumber,
         userId: ctx.user.id,
-        totalAmount,
+        totalAmount: "0", // Will be recalculated server-side
         ...rest,
         items,
       });
-      // Clear cart after order
+
+      // Clear cart after successful order
       await db.clearCart(ctx.user.id);
+
+      // Get the created order to know the real total
+      const createdOrder = result ? await db.getOrderById(result.id) : null;
+      const totalAmount = createdOrder?.totalAmount || "0";
+
       // Notify vendor
       await db.createNotification({
-        userId: input.vendorId,
+        userId: vendor.userId,
         title: "New Order Received",
-        message: `Order ${orderNumber} has been placed. Total: GH₵${totalAmount}`,
+        message: `Order ${orderNumber} has been placed. Total: GH₵${totalAmount}. Payment: ${input.paymentMethod.replace(/_/g, " ")}`,
         type: "order",
         link: `/vendor/orders`,
       });
+
       return { success: true, orderNumber, orderId: result?.id };
     }),
     myOrders: protectedProcedure.query(async ({ ctx }) => {
@@ -261,24 +302,92 @@ export const appRouter = router({
     vendorOrders: vendorProcedure.query(async ({ ctx }) => {
       return db.getVendorOrders(ctx.vendor.id);
     }),
-    getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
-      return db.getOrderById(input.id);
+    getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+      const order = await db.getOrderById(input.id);
+      if (!order) throw new Error("Order not found");
+      // Authorization: user must own the order, be the vendor, or be admin
+      const vendor = await db.getVendorByUserId(ctx.user.id);
+      const isOwner = order.userId === ctx.user.id;
+      const isVendor = vendor && order.vendorId === vendor.id;
+      const isAdmin = ctx.user.role === "admin";
+      if (!isOwner && !isVendor && !isAdmin) {
+        throw new Error("You do not have access to this order");
+      }
+      return order;
     }),
     updateStatus: vendorProcedure.input(z.object({
       id: z.number(),
       status: z.enum(["confirmed", "processing", "shipped", "delivered", "cancelled"]),
-    })).mutation(async ({ input }) => {
-      await db.updateOrderStatus(input.id, input.status);
+    })).mutation(async ({ ctx, input }) => {
       const order = await db.getOrderById(input.id);
-      if (order) {
+      if (!order) throw new Error("Order not found");
+
+      // Authorization: vendor must own this order
+      if (order.vendorId !== ctx.vendor.id) {
+        throw new Error("You do not have access to this order");
+      }
+
+      // Validate status transition
+      if (!isValidStatusTransition(order.status, input.status)) {
+        throw new Error(`Cannot change order status from "${order.status}" to "${input.status}"`);
+      }
+
+      // Build status history
+      const history = (order.statusHistory as { status: string; at: string; by?: string }[] || []);
+      history.push({ status: input.status, at: new Date().toISOString(), by: `vendor:${ctx.vendor.id}` });
+
+      await db.updateOrderStatus(input.id, input.status, history);
+
+      // Restore inventory on cancellation
+      if (input.status === "cancelled") {
+        await db.restoreInventory(input.id);
+      }
+
+      // Track delivery as a sale
+      if (input.status === "delivered") {
+        await db.incrementVendorSales(ctx.vendor.id);
+      }
+
+      // Notify buyer
+      await db.createNotification({
+        userId: order.userId,
+        title: "Order Updated",
+        message: `Your order ${order.orderNumber} status has been updated to: ${input.status}`,
+        type: "order",
+        link: `/orders`,
+      });
+
+      return { success: true };
+    }),
+    // Allow buyer to cancel a pending order
+    cancel: protectedProcedure.input(z.object({
+      id: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const order = await db.getOrderById(input.id);
+      if (!order) throw new Error("Order not found");
+      if (order.userId !== ctx.user.id) throw new Error("You do not have access to this order");
+      if (order.status !== "pending") {
+        throw new Error("Only pending orders can be cancelled by the buyer");
+      }
+
+      const history = (order.statusHistory as { status: string; at: string; by?: string }[] || []);
+      history.push({ status: "cancelled", at: new Date().toISOString(), by: `buyer:${ctx.user.id}` });
+
+      await db.updateOrderStatus(input.id, "cancelled", history);
+      await db.restoreInventory(input.id);
+
+      // Notify vendor
+      const vendor = await db.getVendorById(order.vendorId);
+      if (vendor) {
         await db.createNotification({
-          userId: order.userId,
-          title: "Order Updated",
-          message: `Your order ${order.orderNumber} status has been updated to: ${input.status}`,
+          userId: vendor.userId,
+          title: "Order Cancelled",
+          message: `Order ${order.orderNumber} has been cancelled by the buyer.`,
           type: "order",
-          link: `/orders`,
+          link: `/vendor/orders`,
         });
       }
+
       return { success: true };
     }),
   }),
@@ -288,8 +397,8 @@ export const appRouter = router({
     list: protectedProcedure.query(async ({ ctx }) => {
       return db.getUserNotifications(ctx.user.id);
     }),
-    markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
-      await db.markNotificationRead(input.id);
+    markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.markNotificationRead(input.id, ctx.user.id);
       return { success: true };
     }),
     markAllRead: protectedProcedure.mutation(async ({ ctx }) => {
@@ -303,8 +412,8 @@ export const appRouter = router({
     create: protectedProcedure.input(z.object({
       vendorId: z.number(),
       productId: z.number().optional(),
-      rating: z.number().min(1).max(5),
-      comment: z.string().optional(),
+      rating: z.number().int().min(1).max(5),
+      comment: z.string().min(3, "Review must be at least 3 characters").max(2000).optional(),
     })).mutation(async ({ ctx, input }) => {
       await db.createReview({ ...input, userId: ctx.user.id });
       return { success: true };
