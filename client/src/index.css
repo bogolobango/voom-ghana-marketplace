@@ -281,6 +281,18 @@
   }
 }
 
+/* CTA section responsive background mask */
+.cta-bg-image {
+  -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.7) 0%, transparent 40%);
+  mask-image: linear-gradient(to left, rgba(0,0,0,0.7) 0%, transparent 40%);
+}
+@media (min-width: 768px) {
+  .cta-bg-image {
+    -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 35%, transparent 62%);
+    mask-image: linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 35%, transparent 62%);
+  }
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;

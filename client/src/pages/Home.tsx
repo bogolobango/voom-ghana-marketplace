@@ -242,27 +242,25 @@ export default function Home() {
       {/* CTA for Vendors — glass overlay */}
       <section className="zen-section relative overflow-hidden" style={{ background: "#fff" }}>
         {/* Background image fading in from the right */}
-        <div style={{
+        <div className="cta-bg-image" style={{
           position: "absolute",
           inset: 0,
           backgroundImage: "url('/cta-bg.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "40% center",
           backgroundRepeat: "no-repeat",
-          WebkitMaskImage: "linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 35%, transparent 62%)",
-          maskImage: "linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 35%, transparent 62%)",
         }} />
-        <div className="container text-center relative z-10">
-          <h2 className="text-3xl font-light text-foreground mb-5 tracking-wide">Are You a Spare Parts Dealer?</h2>
-          <p className="text-muted-foreground max-w-lg mx-auto mb-10 tracking-wide leading-relaxed">
+        <div className="container relative z-10 text-center px-6 sm:px-4">
+          <h2 className="text-2xl sm:text-3xl font-light text-foreground mb-4 tracking-wide">Are You a Spare Parts Dealer?</h2>
+          <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-8 tracking-wide leading-relaxed">
             Join VOOM and reach thousands of buyers across Ghana. List your products, manage orders, and grow your business digitally.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Button size="lg" className="rounded-full" asChild>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Button size="lg" className="rounded-full w-full sm:w-auto" asChild>
               <a href={getLoginUrl()} className="text-white no-underline">Start Selling Today</a>
             </Button>
-            <Link href="/vendors">
-              <Button size="lg" variant="outline" className="rounded-full">
+            <Link href="/vendors" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="rounded-full w-full bg-white/70 backdrop-blur-sm border-border/40">
                 View Vendors
               </Button>
             </Link>
