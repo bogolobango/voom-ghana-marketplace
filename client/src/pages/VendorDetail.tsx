@@ -12,7 +12,7 @@ import {
 export default function VendorDetail() {
   const { id } = useParams<{ id: string }>();
   const vendor = trpc.vendor.getById.useQuery({ id: Number(id) });
-  const products = trpc.product.search.useQuery({ vendorId: Number(id) } as any);
+  const products = trpc.product.search.useQuery({ vendorId: Number(id) });
 
   if (vendor.isLoading) {
     return (

@@ -269,6 +269,7 @@ export const appRouter = router({
     search: publicProcedure.input(z.object({
       search: z.string().max(200).optional(),
       categoryId: z.number().optional(),
+      vendorId: z.number().optional(),
       vehicleMake: z.string().max(100).optional(),
       vehicleModel: z.string().max(100).optional(),
       yearFrom: z.number().optional(),

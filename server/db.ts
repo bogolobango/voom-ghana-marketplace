@@ -117,12 +117,6 @@ export async function verifyOtp(phone: string, otpCode: string): Promise<boolean
   return true;
 }
 
-export async function updateUserRole(userId: number, role: "user" | "vendor" | "admin") {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(users).set({ role }).where(eq(users.id, userId));
-}
-
 // ─── Vehicle Reference Helpers ───
 export async function getVehicleMakes() {
   const db = await getDb();
@@ -232,6 +226,7 @@ export async function getVendorProducts(vendorId: number) {
 export async function searchProducts(filters: {
   search?: string;
   categoryId?: number;
+  vendorId?: number;
   vehicleMake?: string;
   vehicleModel?: string;
   yearFrom?: number;
@@ -259,6 +254,7 @@ export async function searchProducts(filters: {
     );
   }
   if (filters.categoryId) conditions.push(eq(products.categoryId, filters.categoryId));
+  if (filters.vendorId) conditions.push(eq(products.vendorId, filters.vendorId));
   if (filters.vehicleMake) conditions.push(eq(products.vehicleMake, filters.vehicleMake));
   if (filters.vehicleModel) conditions.push(eq(products.vehicleModel, filters.vehicleModel));
   if (filters.condition) conditions.push(eq(products.condition, filters.condition as any));
