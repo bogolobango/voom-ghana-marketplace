@@ -24,14 +24,14 @@ export default function Navbar() {
   const cartCount = cart.data?.length || 0;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-border shadow-sm">
+    <header className="sticky top-0 z-50 glass-strong shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
       <div className="container flex items-center justify-between h-16">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 no-underline">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-white font-extrabold text-lg">V</span>
+        <Link href="/" className="flex items-center gap-2.5 no-underline">
+          <div className="w-9 h-9 rounded-2xl bg-primary/90 flex items-center justify-center shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)]">
+            <span className="text-white font-semibold text-lg tracking-wide">V</span>
           </div>
-          <span className="text-xl font-bold text-foreground tracking-tight">
+          <span className="text-xl font-light text-foreground tracking-[0.12em]">
             VOOM
           </span>
         </Link>
@@ -50,10 +50,10 @@ export default function Navbar() {
         </nav>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Link href="/products">
-            <Button variant="ghost" size="icon" className="text-muted-foreground">
-              <Search className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="text-muted-foreground rounded-2xl">
+              <Search className="h-[18px] w-[18px]" />
             </Button>
           </Link>
 
@@ -61,10 +61,10 @@ export default function Navbar() {
             <>
               {/* Notifications */}
               <Link href="/notifications">
-                <Button variant="ghost" size="icon" className="relative text-muted-foreground">
-                  <Bell className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="relative text-muted-foreground rounded-2xl">
+                  <Bell className="h-[18px] w-[18px]" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-[10px] font-bold text-white flex items-center justify-center">
+                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary/90 text-[10px] font-semibold text-white flex items-center justify-center shadow-sm">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
@@ -73,10 +73,10 @@ export default function Navbar() {
 
               {/* Cart */}
               <Link href="/cart">
-                <Button variant="ghost" size="icon" className="relative text-muted-foreground">
-                  <ShoppingCart className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="relative text-muted-foreground rounded-2xl">
+                  <ShoppingCart className="h-[18px] w-[18px]" />
                   {cartCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-[10px] font-bold text-white flex items-center justify-center">
+                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary/90 text-[10px] font-semibold text-white flex items-center justify-center shadow-sm">
                       {cartCount > 9 ? "9+" : cartCount}
                     </span>
                   )}
@@ -86,17 +86,17 @@ export default function Navbar() {
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground">
+                  <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground rounded-2xl ml-1">
                     <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-4 w-4 text-primary" />
+                      <User className="h-3.5 w-3.5 text-primary" />
                     </div>
-                    <span className="hidden sm:inline text-sm font-medium">
+                    <span className="hidden sm:inline text-sm font-normal tracking-wide">
                       {user?.name?.split(" ")[0] || "Account"}
                     </span>
-                    <ChevronDown className="h-3.5 w-3.5" />
+                    <ChevronDown className="h-3 w-3 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuContent align="end" className="w-52 rounded-2xl glass-strong border-white/20 shadow-[0_8px_32px_-6px_rgba(0,0,0,0.08)]">
                   <DropdownMenuItem asChild>
                     <Link href="/orders" className="flex items-center gap-2 no-underline">
                       <Package className="h-4 w-4" /> My Orders
@@ -116,7 +116,7 @@ export default function Navbar() {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-border/30" />
                   <DropdownMenuItem onClick={() => logout()} className="text-destructive">
                     <LogOut className="h-4 w-4 mr-2" /> Sign Out
                   </DropdownMenuItem>
@@ -125,10 +125,10 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" size="sm" className="rounded-full" asChild>
                 <a href={getLoginUrl()}>Sign In</a>
               </Button>
-              <Button size="sm" asChild>
+              <Button size="sm" className="rounded-full shadow-[0_4px_16px_-4px_rgba(0,0,0,0.10)]" asChild>
                 <a href={getLoginUrl()} className="text-white no-underline">
                   Sell Parts
                 </a>
@@ -140,7 +140,7 @@ export default function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-muted-foreground"
+            className="md:hidden text-muted-foreground rounded-2xl"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -150,7 +150,7 @@ export default function Navbar() {
 
       {/* Mobile Nav */}
       {mobileOpen && (
-        <div className="md:hidden border-t bg-white px-4 pb-4 pt-2 space-y-1">
+        <div className="md:hidden border-t border-white/15 glass-strong px-4 pb-5 pt-3 space-y-1">
           <MobileNavLink href="/products" onClick={() => setMobileOpen(false)}>Browse Parts</MobileNavLink>
           <MobileNavLink href="/vendors" onClick={() => setMobileOpen(false)}>Vendors</MobileNavLink>
           <MobileNavLink href="/categories" onClick={() => setMobileOpen(false)}>Categories</MobileNavLink>
@@ -172,8 +172,10 @@ function NavLink({ href, active, children }: { href: string; active: boolean; ch
   return (
     <Link
       href={href}
-      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
-        active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+      className={`px-4 py-2 rounded-full text-sm tracking-wide transition-all duration-300 no-underline ${
+        active
+          ? "bg-white/50 text-foreground shadow-[0_2px_12px_-2px_rgba(0,0,0,0.04)] backdrop-blur-sm font-medium"
+          : "text-muted-foreground hover:text-foreground hover:bg-white/30"
       }`}
     >
       {children}
@@ -183,7 +185,7 @@ function NavLink({ href, active, children }: { href: string; active: boolean; ch
 
 function MobileNavLink({ href, onClick, children }: { href: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <Link href={href} onClick={onClick} className="block px-3 py-2.5 rounded-md text-sm font-medium text-foreground hover:bg-muted no-underline">
+    <Link href={href} onClick={onClick} className="block px-4 py-3 rounded-2xl text-sm tracking-wide text-foreground hover:bg-white/40 no-underline transition-colors duration-200">
       {children}
     </Link>
   );

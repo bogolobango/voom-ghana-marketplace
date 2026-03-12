@@ -99,27 +99,27 @@ export default function Checkout() {
   if (cart.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
       </div>
     );
   }
 
   if (orderCreated) {
     return (
-      <div className="container py-20 text-center max-w-md mx-auto">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-voom-green/10 flex items-center justify-center">
-          <CheckCircle2 className="h-8 w-8 text-voom-green" />
+      <div className="container py-24 text-center max-w-md mx-auto">
+        <div className="w-16 h-16 mx-auto mb-8 rounded-full bg-emerald-500/10 backdrop-blur-sm flex items-center justify-center">
+          <CheckCircle2 className="h-8 w-8 text-emerald-500/80" />
         </div>
-        <h1 className="text-2xl font-bold mb-2">Order Placed!</h1>
-        <p className="text-muted-foreground mb-2">Order Number: <strong>{orderCreated.orderNumber}</strong></p>
-        <p className="text-sm text-muted-foreground mb-8">
+        <h1 className="text-2xl font-light tracking-wide mb-3">Order Placed!</h1>
+        <p className="text-muted-foreground/70 tracking-wide mb-2">Order Number: <span className="font-medium">{orderCreated.orderNumber}</span></p>
+        <p className="text-sm text-muted-foreground/60 tracking-wide mb-10">
           Your order has been sent to the vendor. You can track it in your orders page.
         </p>
-        <div className="space-y-3">
-          <Button className="w-full h-12 text-white" onClick={() => navigate("/orders")}>
+        <div className="space-y-4">
+          <Button className="w-full h-12 text-white rounded-full" onClick={() => navigate("/orders")}>
             View My Orders
           </Button>
-          <Button variant="outline" className="w-full h-12" onClick={() => navigate("/products")}>
+          <Button variant="outline" className="w-full h-12 rounded-full border-white/20" onClick={() => navigate("/products")}>
             Continue Shopping
           </Button>
         </div>
@@ -129,30 +129,30 @@ export default function Checkout() {
 
   if (items.length === 0) {
     return (
-      <div className="container py-20 text-center">
-        <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground/40" />
-        <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-        <Button onClick={() => navigate("/products")} className="mt-4">Browse Parts</Button>
+      <div className="container py-24 text-center">
+        <Package className="h-12 w-12 mx-auto mb-6 text-muted-foreground/30" />
+        <h2 className="text-xl font-light tracking-wide mb-3">Your cart is empty</h2>
+        <Button onClick={() => navigate("/products")} className="mt-6 rounded-full px-8">Browse Parts</Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container py-6">
-        <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+    <div className="min-h-screen bg-background/50">
+      <div className="container py-10">
+        <h1 className="text-2xl font-light tracking-wide mb-8">Checkout</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
+          <div className="lg:col-span-2 space-y-8">
+            <Card className="zen-card glass rounded-2xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+              <CardHeader className="pb-4">
+                <CardTitle className="font-medium tracking-wide">Contact Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CardContent className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <Label>Full Name *</Label>
+                    <Label className="tracking-wide">Full Name *</Label>
                     <Input
                       value={form.buyerName}
                       onChange={(e) => setForm({ ...form, buyerName: e.target.value })}
@@ -160,7 +160,7 @@ export default function Checkout() {
                     />
                   </div>
                   <div>
-                    <Label>Phone Number *</Label>
+                    <Label className="tracking-wide">Phone Number *</Label>
                     <Input
                       value={form.buyerPhone}
                       onChange={(e) => setForm({ ...form, buyerPhone: e.target.value })}
@@ -171,22 +171,22 @@ export default function Checkout() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Shipping Address</CardTitle>
+            <Card className="zen-card glass rounded-2xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+              <CardHeader className="pb-4">
+                <CardTitle className="font-medium tracking-wide">Shipping Address</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5">
                 <div>
-                  <Label>Address</Label>
+                  <Label className="tracking-wide">Address</Label>
                   <Input
                     value={form.shippingAddress}
                     onChange={(e) => setForm({ ...form, shippingAddress: e.target.value })}
                     placeholder="Street address or landmark"
                   />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <Label>City</Label>
+                    <Label className="tracking-wide">City</Label>
                     <Select value={form.shippingCity} onValueChange={(v) => setForm({ ...form, shippingCity: v })}>
                       <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
                       <SelectContent>
@@ -197,7 +197,7 @@ export default function Checkout() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Region</Label>
+                    <Label className="tracking-wide">Region</Label>
                     <Select value={form.shippingRegion} onValueChange={(v) => setForm({ ...form, shippingRegion: v })}>
                       <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
                       <SelectContent>
@@ -209,7 +209,7 @@ export default function Checkout() {
                   </div>
                 </div>
                 <div>
-                  <Label>Order Notes (optional)</Label>
+                  <Label className="tracking-wide">Order Notes (optional)</Label>
                   <Textarea
                     value={form.notes}
                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -223,30 +223,30 @@ export default function Checkout() {
 
           {/* Summary */}
           <div>
-            <Card className="sticky top-20">
-              <CardHeader>
-                <CardTitle className="text-lg">Order Summary</CardTitle>
+            <Card className="sticky top-20 glass-strong rounded-3xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-medium tracking-wide">Order Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
+              <CardContent className="space-y-5">
+                <div className="space-y-2.5">
                   {items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground truncate mr-2">
+                      <span className="text-muted-foreground/70 tracking-wide truncate mr-2">
                         {item.product?.name} x{item.quantity}
                       </span>
-                      <span className="font-medium flex-shrink-0">
+                      <span className="font-medium tracking-wide flex-shrink-0">
                         {formatGHS(parseFloat(item.product?.price || "0") * item.quantity)}
                       </span>
                     </div>
                   ))}
                 </div>
-                <Separator />
-                <div className="flex justify-between font-bold text-lg">
+                <Separator className="bg-border/30" />
+                <div className="flex justify-between font-medium tracking-wide text-lg">
                   <span>Total</span>
-                  <span className="text-primary">{formatGHS(total)}</span>
+                  <span className="text-primary/90">{formatGHS(total)}</span>
                 </div>
                 <Button
-                  className="w-full h-12 text-white"
+                  className="w-full h-12 text-white rounded-full"
                   size="lg"
                   disabled={createOrder.isPending}
                   onClick={handleSubmit}
@@ -257,7 +257,7 @@ export default function Checkout() {
                     <>Place Order</>
                   )}
                 </Button>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground/60 tracking-wide justify-center">
                   <MessageCircle className="h-3.5 w-3.5" />
                   Vendor will confirm via WhatsApp
                 </div>

@@ -60,25 +60,25 @@ export default function VendorDashboard() {
   if (loading || vendor.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary/80" />
       </div>
     );
   }
 
   if (!vendor.data || vendor.data.status !== "approved") {
     return (
-      <div className="container py-20 text-center">
-        <Store className="h-12 w-12 mx-auto mb-4 text-muted-foreground/40" />
-        <h2 className="text-xl font-semibold mb-2">
+      <div className="container py-24 text-center">
+        <Store className="h-12 w-12 mx-auto mb-6 text-muted-foreground/30" />
+        <h2 className="text-xl font-light tracking-wide mb-3">
           {vendor.data ? "Application Pending" : "Not a Vendor"}
         </h2>
-        <p className="text-muted-foreground text-sm mb-6">
+        <p className="text-muted-foreground text-sm tracking-wide mb-8">
           {vendor.data
             ? "Your vendor application is under review."
             : "Register as a vendor to access the dashboard."}
         </p>
         {!vendor.data && (
-          <Button onClick={() => navigate("/vendor/register")}>Register as Vendor</Button>
+          <Button onClick={() => navigate("/vendor/register")} className="rounded-full">Register as Vendor</Button>
         )}
       </div>
     );
@@ -113,16 +113,16 @@ export default function VendorDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-voom-navy py-8">
+      <div className="zen-hero py-12">
         <div className="container">
-          <h1 className="text-2xl font-bold text-white">Vendor Dashboard</h1>
-          <p className="text-white/60 mt-1">{vendor.data.businessName}</p>
+          <h1 className="text-2xl font-light tracking-wide text-white">Vendor Dashboard</h1>
+          <p className="text-white/50 mt-2 tracking-wide">{vendor.data.businessName}</p>
         </div>
       </div>
 
-      <div className="container py-6">
+      <div className="container py-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           <StatCard icon={<Package className="h-5 w-5" />} label="Products" value={products.length} />
           <StatCard icon={<ShoppingCart className="h-5 w-5" />} label="Orders" value={orders.length} />
           <StatCard icon={<TrendingUp className="h-5 w-5" />} label="Revenue" value={formatGHS(totalRevenue)} />
@@ -130,69 +130,73 @@ export default function VendorDashboard() {
         </div>
 
         <Tabs defaultValue="products">
-          <TabsList className="mb-4">
-            <TabsTrigger value="products">Products ({products.length})</TabsTrigger>
-            <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
+          <TabsList className="mb-6 bg-white/50 backdrop-blur-xl rounded-2xl">
+            <TabsTrigger value="products" className="tracking-wide rounded-xl">Products ({products.length})</TabsTrigger>
+            <TabsTrigger value="orders" className="tracking-wide rounded-xl">Orders ({orders.length})</TabsTrigger>
           </TabsList>
 
           {/* Products Tab */}
           <TabsContent value="products">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">My Products</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-medium tracking-wide">My Products</h2>
               <Dialog open={showAddProduct} onOpenChange={setShowAddProduct}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="gap-1 text-white">
+                  <Button size="sm" className="gap-1 text-white rounded-full">
                     <Plus className="h-4 w-4" /> Add Product
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+                <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-white/80 backdrop-blur-xl border-white/20">
                   <DialogHeader>
-                    <DialogTitle>Add New Product</DialogTitle>
+                    <DialogTitle className="font-light tracking-wide text-lg">Add New Product</DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4 pt-2">
+                  <div className="space-y-5 pt-3">
                     <div>
-                      <Label>Product Name *</Label>
+                      <Label className="tracking-wide">Product Name *</Label>
                       <Input
                         value={productForm.name}
                         onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                         placeholder="e.g. Front Brake Pads Set"
+                        className="rounded-2xl border-border/30"
                       />
                     </div>
                     <div>
-                      <Label>Description</Label>
+                      <Label className="tracking-wide">Description</Label>
                       <Textarea
                         value={productForm.description}
                         onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                         placeholder="Product details, specifications..."
                         rows={3}
+                        className="rounded-2xl border-border/30"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Price (GH₵) *</Label>
+                        <Label className="tracking-wide">Price (GH₵) *</Label>
                         <Input
                           value={productForm.price}
                           onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                           placeholder="0.00"
                           type="number"
                           step="0.01"
+                          className="rounded-2xl border-border/30"
                         />
                       </div>
                       <div>
-                        <Label>Quantity</Label>
+                        <Label className="tracking-wide">Quantity</Label>
                         <Input
                           value={productForm.quantity}
                           onChange={(e) => setProductForm({ ...productForm, quantity: e.target.value })}
                           type="number"
+                          className="rounded-2xl border-border/30"
                         />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Category</Label>
+                        <Label className="tracking-wide">Category</Label>
                         <Select value={productForm.categoryId} onValueChange={(v) => setProductForm({ ...productForm, categoryId: v })}>
-                          <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                          <SelectContent>
+                          <SelectTrigger className="rounded-2xl border-border/30"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent className="rounded-2xl">
                             {(categories.data || []).map((cat) => (
                               <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
                             ))}
@@ -200,10 +204,10 @@ export default function VendorDashboard() {
                         </Select>
                       </div>
                       <div>
-                        <Label>Condition</Label>
+                        <Label className="tracking-wide">Condition</Label>
                         <Select value={productForm.condition} onValueChange={(v: any) => setProductForm({ ...productForm, condition: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
+                          <SelectTrigger className="rounded-2xl border-border/30"><SelectValue /></SelectTrigger>
+                          <SelectContent className="rounded-2xl">
                             {PART_CONDITIONS.map((c) => (
                               <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                             ))}
@@ -213,28 +217,30 @@ export default function VendorDashboard() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Brand</Label>
+                        <Label className="tracking-wide">Brand</Label>
                         <Input
                           value={productForm.brand}
                           onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })}
                           placeholder="e.g. Bosch, Denso"
+                          className="rounded-2xl border-border/30"
                         />
                       </div>
                       <div>
-                        <Label>SKU</Label>
+                        <Label className="tracking-wide">SKU</Label>
                         <Input
                           value={productForm.sku}
                           onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
                           placeholder="Optional"
+                          className="rounded-2xl border-border/30"
                         />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Vehicle Make</Label>
+                        <Label className="tracking-wide">Vehicle Make</Label>
                         <Select value={productForm.vehicleMake} onValueChange={(v) => setProductForm({ ...productForm, vehicleMake: v })}>
-                          <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                          <SelectContent>
+                          <SelectTrigger className="rounded-2xl border-border/30"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent className="rounded-2xl">
                             {VEHICLE_MAKES.map((make) => (
                               <SelectItem key={make} value={make}>{make}</SelectItem>
                             ))}
@@ -242,36 +248,39 @@ export default function VendorDashboard() {
                         </Select>
                       </div>
                       <div>
-                        <Label>Vehicle Model</Label>
+                        <Label className="tracking-wide">Vehicle Model</Label>
                         <Input
                           value={productForm.vehicleModel}
                           onChange={(e) => setProductForm({ ...productForm, vehicleModel: e.target.value })}
                           placeholder="e.g. Camry, Corolla"
+                          className="rounded-2xl border-border/30"
                         />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Year From</Label>
+                        <Label className="tracking-wide">Year From</Label>
                         <Input
                           value={productForm.yearFrom}
                           onChange={(e) => setProductForm({ ...productForm, yearFrom: e.target.value })}
                           placeholder="e.g. 2010"
                           type="number"
+                          className="rounded-2xl border-border/30"
                         />
                       </div>
                       <div>
-                        <Label>Year To</Label>
+                        <Label className="tracking-wide">Year To</Label>
                         <Input
                           value={productForm.yearTo}
                           onChange={(e) => setProductForm({ ...productForm, yearTo: e.target.value })}
                           placeholder="e.g. 2024"
                           type="number"
+                          className="rounded-2xl border-border/30"
                         />
                       </div>
                     </div>
                     <Button
-                      className="w-full text-white"
+                      className="w-full text-white rounded-full"
                       disabled={createProduct.isPending}
                       onClick={handleAddProduct}
                     >
@@ -284,33 +293,33 @@ export default function VendorDashboard() {
             </div>
 
             {products.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {products.map((product) => {
                   const images = (product.images as string[] | null) || [];
                   return (
-                    <Card key={product.id}>
-                      <CardContent className="p-4 flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                    <Card key={product.id} className="zen-card rounded-2xl border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+                      <CardContent className="p-5 flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-muted/50 overflow-hidden flex-shrink-0">
                           {images[0] ? (
                             <img src={images[0]} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <Package className="h-6 w-6 text-muted-foreground/30" />
+                              <Package className="h-6 w-6 text-muted-foreground/20" />
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-sm truncate">{product.name}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-primary font-bold text-sm">{formatGHS(product.price)}</span>
-                            <Badge variant="secondary" className="text-[10px]">{product.condition}</Badge>
-                            <span className="text-xs text-muted-foreground">Qty: {product.quantity}</span>
+                          <h3 className="font-medium tracking-wide text-sm truncate">{product.name}</h3>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-primary/90 font-medium tracking-wide text-sm">{formatGHS(product.price)}</span>
+                            <Badge variant="secondary" className="text-[10px] rounded-full">{product.condition}</Badge>
+                            <span className="text-xs text-muted-foreground tracking-wide">Qty: {product.quantity}</span>
                           </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive/70 hover:text-destructive rounded-2xl"
                           onClick={() => {
                             if (confirm("Delete this product?")) {
                               deleteProduct.mutate({ id: product.id });
@@ -325,11 +334,11 @@ export default function VendorDashboard() {
                 })}
               </div>
             ) : (
-              <Card className="border-dashed">
-                <CardContent className="py-12 text-center">
-                  <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                  <p className="font-medium mb-1">No products yet</p>
-                  <p className="text-sm text-muted-foreground">Add your first product to start selling.</p>
+              <Card className="border-dashed border-white/20 rounded-3xl bg-white/30 backdrop-blur-xl">
+                <CardContent className="py-16 text-center">
+                  <Package className="h-10 w-10 mx-auto mb-4 text-muted-foreground/30" />
+                  <p className="font-medium tracking-wide mb-1">No products yet</p>
+                  <p className="text-sm text-muted-foreground tracking-wide">Add your first product to start selling.</p>
                 </CardContent>
               </Card>
             )}
@@ -337,30 +346,31 @@ export default function VendorDashboard() {
 
           {/* Orders Tab */}
           <TabsContent value="orders">
-            <h2 className="text-lg font-semibold mb-4">Orders</h2>
+            <h2 className="text-lg font-medium tracking-wide mb-6">Orders</h2>
             {orders.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {orders.map((order) => (
-                  <Card key={order.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
+                  <Card key={order.id} className="zen-card rounded-2xl border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+                    <CardContent className="p-5">
+                      <div className="flex items-center justify-between mb-3">
                         <div>
-                          <span className="font-mono text-sm font-medium">{order.orderNumber}</span>
-                          <span className="text-xs text-muted-foreground ml-2">
+                          <span className="font-mono text-sm font-medium tracking-wide">{order.orderNumber}</span>
+                          <span className="text-xs text-muted-foreground ml-2 tracking-wide">
                             {new Date(order.createdAt).toLocaleDateString("en-GH")}
                           </span>
                         </div>
-                        <Badge variant={order.status === "delivered" ? "default" : "secondary"} className="capitalize">
+                        <Badge variant={order.status === "delivered" ? "default" : "secondary"} className="capitalize rounded-full">
                           {order.status}
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-primary font-bold">{formatGHS(order.totalAmount)}</span>
+                        <span className="text-primary/90 font-medium tracking-wide">{formatGHS(order.totalAmount)}</span>
                         {order.status === "pending" && (
                           <div className="flex gap-2">
                             <Button
                               size="sm"
                               variant="outline"
+                              className="rounded-full border-border/30"
                               onClick={() => updateOrderStatus.mutate({ id: order.id, status: "confirmed" })}
                             >
                               Confirm
@@ -368,7 +378,7 @@ export default function VendorDashboard() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-destructive"
+                              className="text-destructive/70 rounded-full"
                               onClick={() => updateOrderStatus.mutate({ id: order.id, status: "cancelled" })}
                             >
                               Cancel
@@ -379,6 +389,7 @@ export default function VendorDashboard() {
                           <Button
                             size="sm"
                             variant="outline"
+                            className="rounded-full border-border/30"
                             onClick={() => updateOrderStatus.mutate({ id: order.id, status: "processing" })}
                           >
                             Mark Processing
@@ -388,6 +399,7 @@ export default function VendorDashboard() {
                           <Button
                             size="sm"
                             variant="outline"
+                            className="rounded-full border-border/30"
                             onClick={() => updateOrderStatus.mutate({ id: order.id, status: "shipped" })}
                           >
                             Mark Shipped
@@ -397,7 +409,7 @@ export default function VendorDashboard() {
                           <Button
                             size="sm"
                             onClick={() => updateOrderStatus.mutate({ id: order.id, status: "delivered" })}
-                            className="text-white"
+                            className="text-white rounded-full"
                           >
                             Mark Delivered
                           </Button>
@@ -408,11 +420,11 @@ export default function VendorDashboard() {
                 ))}
               </div>
             ) : (
-              <Card className="border-dashed">
-                <CardContent className="py-12 text-center">
-                  <ShoppingCart className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                  <p className="font-medium mb-1">No orders yet</p>
-                  <p className="text-sm text-muted-foreground">Orders will appear here when buyers purchase your products.</p>
+              <Card className="border-dashed border-white/20 rounded-3xl bg-white/30 backdrop-blur-xl">
+                <CardContent className="py-16 text-center">
+                  <ShoppingCart className="h-10 w-10 mx-auto mb-4 text-muted-foreground/30" />
+                  <p className="font-medium tracking-wide mb-1">No orders yet</p>
+                  <p className="text-sm text-muted-foreground tracking-wide">Orders will appear here when buyers purchase your products.</p>
                 </CardContent>
               </Card>
             )}
@@ -425,14 +437,14 @@ export default function VendorDashboard() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
   return (
-    <Card>
-      <CardContent className="p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+    <Card className="zen-card rounded-2xl border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+      <CardContent className="p-5 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary/90 flex-shrink-0">
           {icon}
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-lg font-bold">{value}</p>
+          <p className="text-xs text-muted-foreground tracking-wide">{label}</p>
+          <p className="text-lg font-light tracking-[0.03em]">{value}</p>
         </div>
       </CardContent>
     </Card>

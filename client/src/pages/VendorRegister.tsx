@@ -33,18 +33,18 @@ export default function VendorRegister() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary/90" />
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="container py-20 text-center max-w-md mx-auto">
-        <Store className="h-12 w-12 mx-auto mb-4 text-primary" />
-        <h2 className="text-2xl font-bold mb-2">Become a Vendor</h2>
-        <p className="text-muted-foreground mb-6">Sign in to register your spare parts business on VOOM.</p>
-        <Button size="lg" asChild>
+      <div className="container py-24 text-center max-w-md mx-auto">
+        <Store className="h-12 w-12 mx-auto mb-5 text-primary/90" />
+        <h2 className="text-2xl font-light tracking-wide mb-3">Become a Vendor</h2>
+        <p className="text-muted-foreground/70 mb-8 tracking-wide">Sign in to register your spare parts business on VOOM.</p>
+        <Button size="lg" className="rounded-full px-8" asChild>
           <a href={getLoginUrl()}>Sign In to Continue</a>
         </Button>
       </div>
@@ -53,19 +53,19 @@ export default function VendorRegister() {
 
   if (existingVendor.data) {
     return (
-      <div className="container py-20 text-center max-w-md mx-auto">
-        <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-voom-green" />
-        <h2 className="text-2xl font-bold mb-2">Already Registered</h2>
-        <p className="text-muted-foreground mb-2">
+      <div className="container py-24 text-center max-w-md mx-auto">
+        <CheckCircle2 className="h-12 w-12 mx-auto mb-5 text-voom-green" />
+        <h2 className="text-2xl font-light tracking-wide mb-3">Already Registered</h2>
+        <p className="text-muted-foreground/70 mb-2 tracking-wide">
           Status: <strong className="capitalize">{existingVendor.data.status}</strong>
         </p>
         {existingVendor.data.status === "pending" && (
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-sm text-muted-foreground/60 mb-8 tracking-wide">
             Your application is under review. You'll be notified once approved.
           </p>
         )}
         {existingVendor.data.status === "approved" && (
-          <Button onClick={() => navigate("/vendor/dashboard")} className="mt-4">
+          <Button onClick={() => navigate("/vendor/dashboard")} className="mt-5 rounded-full px-8">
             Go to Dashboard
           </Button>
         )}
@@ -89,21 +89,22 @@ export default function VendorRegister() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container py-8 max-w-2xl">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Store className="h-7 w-7 text-primary" />
+      <div className="container py-12 max-w-2xl">
+        <Card className="glass-strong rounded-3xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+          <CardHeader className="text-center pb-2">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Store className="h-7 w-7 text-primary/90" />
             </div>
-            <CardTitle className="text-2xl">Register as a Vendor</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-light tracking-wide">Register as a Vendor</CardTitle>
+            <CardDescription className="tracking-wide">
               List your spare parts on Ghana's digital marketplace
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-6 px-8 pb-8">
             <div>
-              <Label>Business Name *</Label>
+              <Label className="tracking-wide">Business Name *</Label>
               <Input
+                className="rounded-2xl border-border/30 mt-1.5"
                 value={form.businessName}
                 onChange={(e) => setForm({ ...form, businessName: e.target.value })}
                 placeholder="e.g. Kwame Auto Parts"
@@ -111,8 +112,9 @@ export default function VendorRegister() {
             </div>
 
             <div>
-              <Label>Business Description</Label>
+              <Label className="tracking-wide">Business Description</Label>
               <Textarea
+                className="rounded-2xl border-border/30 mt-1.5"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="Tell buyers about your business, specialties, and experience..."
@@ -120,18 +122,20 @@ export default function VendorRegister() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <Label>Phone Number *</Label>
+                <Label className="tracking-wide">Phone Number *</Label>
                 <Input
+                  className="rounded-2xl border-border/30 mt-1.5"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="e.g. 0241234567"
                 />
               </div>
               <div>
-                <Label>WhatsApp Number</Label>
+                <Label className="tracking-wide">WhatsApp Number</Label>
                 <Input
+                  className="rounded-2xl border-border/30 mt-1.5"
                   value={form.whatsapp}
                   onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
                   placeholder="e.g. 0241234567"
@@ -140,8 +144,9 @@ export default function VendorRegister() {
             </div>
 
             <div>
-              <Label>Email</Label>
+              <Label className="tracking-wide">Email</Label>
               <Input
+                className="rounded-2xl border-border/30 mt-1.5"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="business@email.com"
@@ -149,19 +154,20 @@ export default function VendorRegister() {
             </div>
 
             <div>
-              <Label>Business Address</Label>
+              <Label className="tracking-wide">Business Address</Label>
               <Input
+                className="rounded-2xl border-border/30 mt-1.5"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 placeholder="Shop number, street, area"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <Label>City</Label>
+                <Label className="tracking-wide">City</Label>
                 <Select value={form.city} onValueChange={(v) => setForm({ ...form, city: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
+                  <SelectTrigger className="rounded-2xl border-border/30 mt-1.5"><SelectValue placeholder="Select city" /></SelectTrigger>
                   <SelectContent>
                     {GHANA_CITIES.map((city) => (
                       <SelectItem key={city} value={city}>{city}</SelectItem>
@@ -170,9 +176,9 @@ export default function VendorRegister() {
                 </Select>
               </div>
               <div>
-                <Label>Region</Label>
+                <Label className="tracking-wide">Region</Label>
                 <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
+                  <SelectTrigger className="rounded-2xl border-border/30 mt-1.5"><SelectValue placeholder="Select region" /></SelectTrigger>
                   <SelectContent>
                     {GHANA_REGIONS.map((region) => (
                       <SelectItem key={region} value={region}>{region}</SelectItem>
@@ -183,7 +189,7 @@ export default function VendorRegister() {
             </div>
 
             <Button
-              className="w-full h-12 text-white"
+              className="w-full h-12 text-white rounded-full"
               size="lg"
               disabled={registerVendor.isPending}
               onClick={handleSubmit}
@@ -194,7 +200,7 @@ export default function VendorRegister() {
                 "Submit Application"
               )}
             </Button>
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="text-xs text-center text-muted-foreground/60 tracking-wide">
               Your application will be reviewed by our team. You'll be notified once approved.
             </p>
           </CardContent>
