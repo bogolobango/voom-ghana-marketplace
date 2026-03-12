@@ -171,10 +171,10 @@ export async function getApprovedVendors() {
   return db.select().from(vendors).where(eq(vendors.status, "approved")).orderBy(desc(vendors.createdAt));
 }
 
-export async function getAllVendors() {
+export async function getAllVendors(limit = 50, offset = 0) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(vendors).orderBy(desc(vendors.createdAt));
+  return db.select().from(vendors).orderBy(desc(vendors.createdAt)).limit(Math.min(limit, 100)).offset(offset);
 }
 
 export async function updateVendorStatus(id: number, status: "pending" | "approved" | "rejected" | "suspended") {
@@ -467,10 +467,10 @@ export async function createOrder(data: {
   return result;
 }
 
-export async function getUserOrders(userId: number) {
+export async function getUserOrders(userId: number, limit = 50, offset = 0) {
   const db = await getDb();
   if (!db) return [];
-  const userOrders = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  const userOrders = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt)).limit(Math.min(limit, 100)).offset(offset);
   // Include items for each order
   if (userOrders.length === 0) return [];
   const orderIds = userOrders.map(o => o.id);
@@ -483,10 +483,10 @@ export async function getUserOrders(userId: number) {
   return userOrders.map(o => ({ ...o, items: itemsByOrder.get(o.id) || [] }));
 }
 
-export async function getVendorOrders(vendorId: number) {
+export async function getVendorOrders(vendorId: number, limit = 50, offset = 0) {
   const db = await getDb();
   if (!db) return [];
-  const vendorOrderList = await db.select().from(orders).where(eq(orders.vendorId, vendorId)).orderBy(desc(orders.createdAt));
+  const vendorOrderList = await db.select().from(orders).where(eq(orders.vendorId, vendorId)).orderBy(desc(orders.createdAt)).limit(Math.min(limit, 100)).offset(offset);
   if (vendorOrderList.length === 0) return [];
   const orderIds = vendorOrderList.map(o => o.id);
   const allItems = await db.select().from(orderItems).where(inArray(orderItems.orderId, orderIds));
@@ -515,10 +515,10 @@ export async function updateOrderStatus(id: number, status: string, statusHistor
   await db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 
-export async function getAllOrders() {
+export async function getAllOrders(limit = 50, offset = 0) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orders).orderBy(desc(orders.createdAt));
+  return db.select().from(orders).orderBy(desc(orders.createdAt)).limit(Math.min(limit, 100)).offset(offset);
 }
 
 // Restore inventory when an order is cancelled
@@ -544,10 +544,10 @@ export async function createNotification(data: { userId: number; title: string; 
   await db.insert(notifications).values(data as any);
 }
 
-export async function getUserNotifications(userId: number) {
+export async function getUserNotifications(userId: number, limit = 50, offset = 0) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt)).limit(50);
+  return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt)).limit(Math.min(limit, 100)).offset(offset);
 }
 
 export async function markNotificationRead(id: number, userId: number) {

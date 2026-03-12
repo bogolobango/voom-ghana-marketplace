@@ -8,6 +8,9 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import * as db from "./db";
 import { storagePut } from "./storage";
+import { checkRateLimit, RATE_LIMITS } from "./rateLimit";
+import { sanitizeInput } from "./sanitize";
+import { logger } from "./logger";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== "admin") {
@@ -37,17 +40,21 @@ export const appRouter = router({
       phone: z.string().min(1, "Phone number is required"),
       name: z.string().min(1, "Name is required").max(255),
     })).mutation(async ({ input }) => {
+      const sanitized = sanitizeInput(input);
       // Normalize phone: ensure it has country code format for storage
-      const cleanPhone = input.phone.replace(/[\s\-()]/g, "");
+      const cleanPhone = sanitized.phone.replace(/[\s\-()]/g, "");
       if (!isValidGhanaPhone(cleanPhone)) {
         throw new Error("Please enter a valid Ghana phone number (e.g. 0241234567)");
       }
+
+      // Rate limit OTP requests per phone number
+      checkRateLimit(`otp:${cleanPhone}`, RATE_LIMITS.otpRequest);
 
       // Find or create user
       let user = await db.getUserByPhone(cleanPhone);
       let isNewUser = false;
       if (!user) {
-        user = await db.createPhoneUser(cleanPhone, input.name);
+        user = await db.createPhoneUser(cleanPhone, sanitized.name);
         isNewUser = true;
       }
       if (!user) throw new Error("Failed to create account");
@@ -56,8 +63,7 @@ export const appRouter = router({
       const otp = "1234";
       await db.saveOtp(user.id, otp);
 
-      // In production, send SMS here via Hubtel/Arkesel
-      console.log(`[OTP] Code for ${cleanPhone}: ${otp}`);
+      logger.info("OTP requested", { phone: cleanPhone, isNewUser });
 
       return { success: true, message: "OTP sent to your phone", isNewUser };
     }),
@@ -66,8 +72,15 @@ export const appRouter = router({
       otp: z.string().min(1),
     })).mutation(async ({ ctx, input }) => {
       const cleanPhone = input.phone.replace(/[\s\-()]/g, "");
+
+      // Rate limit OTP verification attempts
+      checkRateLimit(`verify:${cleanPhone}`, RATE_LIMITS.otpVerify);
+
       const valid = await db.verifyOtp(cleanPhone, input.otp);
-      if (!valid) throw new Error("Invalid or expired OTP");
+      if (!valid) {
+        logger.warn("OTP verification failed", { phone: cleanPhone });
+        throw new Error("Invalid or expired OTP");
+      }
 
       const user = await db.getUserByPhone(cleanPhone);
       if (!user) throw new Error("User not found");
@@ -86,10 +99,11 @@ export const appRouter = router({
       email: z.string().email().max(320).optional(),
       phone: z.string().max(20).optional(),
     })).mutation(async ({ ctx, input }) => {
-      if (input.phone && !isValidGhanaPhone(input.phone)) {
+      const sanitized = sanitizeInput(input);
+      if (sanitized.phone && !isValidGhanaPhone(sanitized.phone)) {
         throw new Error("Please enter a valid Ghana phone number");
       }
-      await db.updateUserProfile(ctx.user.id, input);
+      await db.updateUserProfile(ctx.user.id, sanitized);
       return { success: true };
     }),
   }),
@@ -104,6 +118,9 @@ export const appRouter = router({
         { message: "Only image files are allowed" }
       ),
     })).mutation(async ({ ctx, input }) => {
+      // Rate limit uploads per user
+      checkRateLimit(`upload:${ctx.user.id}`, RATE_LIMITS.upload);
+
       const buffer = Buffer.from(input.base64, "base64");
       // Max 5MB
       if (buffer.length > 5 * 1024 * 1024) {
@@ -112,6 +129,7 @@ export const appRouter = router({
       const ext = input.fileName.split(".").pop() || "jpg";
       const key = `products/${ctx.user.id}/${nanoid(12)}.${ext}`;
       const result = await storagePut(key, buffer, input.contentType);
+      logger.info("Image uploaded", { userId: ctx.user.id, key });
       return { url: result.url };
     }),
   }),
@@ -146,18 +164,20 @@ export const appRouter = router({
       latitude: z.string().optional(),
       longitude: z.string().optional(),
     })).mutation(async ({ ctx, input }) => {
+      const sanitized = sanitizeInput(input);
       const existing = await db.getVendorByUserId(ctx.user.id);
       if (existing) throw new Error("You already have a vendor profile");
 
       // Validate Ghana phone
-      if (!isValidGhanaPhone(input.phone)) {
+      if (!isValidGhanaPhone(sanitized.phone)) {
         throw new Error("Please enter a valid Ghana phone number (e.g. 0241234567)");
       }
 
       // Auto-approve vendors for MVP — they can start listing immediately
-      const result = await db.createVendor({ ...input, userId: ctx.user.id, status: "approved" });
+      const result = await db.createVendor({ ...sanitized, userId: ctx.user.id, status: "approved" });
       // Update user role to vendor
       await db.updateUserRole(ctx.user.id, "vendor");
+      logger.info("Vendor registered", { userId: ctx.user.id, vendorId: result?.id });
       return { success: true, vendorId: result?.id, status: "approved" as const };
     }),
     me: protectedProcedure.query(async ({ ctx }) => {
@@ -344,19 +364,24 @@ export const appRouter = router({
         totalPrice: z.string(),
       })).min(1, "Order must have at least one item"),
     })).mutation(async ({ ctx, input }) => {
+      const sanitized = sanitizeInput(input);
+
+      // Rate limit order creation per user
+      checkRateLimit(`order:${ctx.user.id}`, RATE_LIMITS.orderCreate);
+
       // Validate phone
-      if (!isValidGhanaPhone(input.buyerPhone)) {
+      if (!isValidGhanaPhone(sanitized.buyerPhone)) {
         throw new Error("Please enter a valid Ghana phone number");
       }
 
       // Validate vendor exists and is approved
-      const vendor = await db.getVendorById(input.vendorId);
+      const vendor = await db.getVendorById(sanitized.vendorId);
       if (!vendor || vendor.status !== "approved") {
         throw new Error("Vendor is not available");
       }
 
       const orderNumber = `VOM-${nanoid(8).toUpperCase()}`;
-      const { items, ...rest } = input;
+      const { items, ...rest } = sanitized;
 
       // createOrder now handles inventory validation, price verification, and stock decrement
       const result = await db.createOrder({
@@ -378,18 +403,25 @@ export const appRouter = router({
       await db.createNotification({
         userId: vendor.userId,
         title: "New Order Received",
-        message: `Order ${orderNumber} has been placed. Total: GH₵${totalAmount}. Payment: ${input.paymentMethod.replace(/_/g, " ")}`,
+        message: `Order ${orderNumber} has been placed. Total: GH₵${totalAmount}. Payment: ${sanitized.paymentMethod.replace(/_/g, " ")}`,
         type: "order",
         link: `/vendor/orders`,
       });
 
+      logger.info("Order created", { orderNumber, userId: ctx.user.id, vendorId: sanitized.vendorId });
       return { success: true, orderNumber, orderId: result?.id };
     }),
-    myOrders: protectedProcedure.query(async ({ ctx }) => {
-      return db.getUserOrders(ctx.user.id);
+    myOrders: protectedProcedure.input(z.object({
+      limit: z.number().min(1).max(100).optional(),
+      offset: z.number().min(0).optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.getUserOrders(ctx.user.id, input?.limit, input?.offset);
     }),
-    vendorOrders: vendorProcedure.query(async ({ ctx }) => {
-      return db.getVendorOrders(ctx.vendor.id);
+    vendorOrders: vendorProcedure.input(z.object({
+      limit: z.number().min(1).max(100).optional(),
+      offset: z.number().min(0).optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.getVendorOrders(ctx.vendor.id, input?.limit, input?.offset);
     }),
     getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
       const order = await db.getOrderById(input.id);
@@ -483,8 +515,11 @@ export const appRouter = router({
 
   // ─── Notifications ───
   notification: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      return db.getUserNotifications(ctx.user.id);
+    list: protectedProcedure.input(z.object({
+      limit: z.number().min(1).max(100).optional(),
+      offset: z.number().min(0).optional(),
+    }).optional()).query(async ({ ctx, input }) => {
+      return db.getUserNotifications(ctx.user.id, input?.limit, input?.offset);
     }),
     markRead: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await db.markNotificationRead(input.id, ctx.user.id);
@@ -582,8 +617,11 @@ export const appRouter = router({
     stats: adminProcedure.query(async () => {
       return db.getAdminStats();
     }),
-    vendors: adminProcedure.query(async () => {
-      return db.getAllVendors();
+    vendors: adminProcedure.input(z.object({
+      limit: z.number().min(1).max(100).optional(),
+      offset: z.number().min(0).optional(),
+    }).optional()).query(async ({ input }) => {
+      return db.getAllVendors(input?.limit, input?.offset);
     }),
     updateVendorStatus: adminProcedure.input(z.object({
       id: z.number(),
@@ -601,8 +639,11 @@ export const appRouter = router({
       }
       return { success: true };
     }),
-    orders: adminProcedure.query(async () => {
-      return db.getAllOrders();
+    orders: adminProcedure.input(z.object({
+      limit: z.number().min(1).max(100).optional(),
+      offset: z.number().min(0).optional(),
+    }).optional()).query(async ({ input }) => {
+      return db.getAllOrders(input?.limit, input?.offset);
     }),
     seedCategories: adminProcedure.mutation(async () => {
       const cats = [

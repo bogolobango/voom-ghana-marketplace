@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { logger } from "../logger";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -33,6 +34,13 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Request logging (non-static routes only)
+  app.use("/api", (req, _res, next) => {
+    logger.debug("API request", { method: req.method, path: req.path });
+    next();
+  });
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API
@@ -58,8 +66,11 @@ async function startServer() {
   }
 
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    logger.info("Server started", { port, env: process.env.NODE_ENV || "development" });
   });
 }
 
-startServer().catch(console.error);
+startServer().catch((err) => {
+  logger.error("Server failed to start", { error: String(err) });
+  process.exit(1);
+});
