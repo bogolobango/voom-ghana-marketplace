@@ -1,5 +1,6 @@
 import { eq, and, like, desc, asc, sql, or, gte, lte, inArray } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import {
   InsertUser, users, vendors, InsertVendor, products, InsertProduct,
   categories, cartItems, orders, orderItems, reviews, notifications,
@@ -12,7 +13,8 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      _db = drizzle(pool);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -43,7 +45,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   else if (user.openId === ENV.ownerOpenId) { values.role = 'admin'; updateSet.role = 'admin'; }
   if (!values.lastSignedIn) values.lastSignedIn = new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
-  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+  await db.insert(users).values(values).onConflictDoUpdate({ target: users.openId, set: updateSet });
 }
 
 export async function getUserByOpenId(openId: string) {
@@ -70,7 +72,7 @@ export async function createCategory(data: { name: string; slug: string; icon?: 
 export async function createVendor(data: InsertVendor) {
   const db = await getDb();
   if (!db) return;
-  const [result] = await db.insert(vendors).values(data).$returningId();
+  const [result] = await db.insert(vendors).values(data).returning({ id: vendors.id });
   return result;
 }
 
@@ -116,7 +118,7 @@ export async function updateVendor(id: number, data: Partial<InsertVendor>) {
 export async function createProduct(data: InsertProduct) {
   const db = await getDb();
   if (!db) return;
-  const [result] = await db.insert(products).values(data).$returningId();
+  const [result] = await db.insert(products).values(data).returning({ id: products.id });
   return result;
 }
 
@@ -279,7 +281,7 @@ export async function createOrder(data: {
   const db = await getDb();
   if (!db) return;
   const { items, ...orderData } = data;
-  const [result] = await db.insert(orders).values(orderData).$returningId();
+  const [result] = await db.insert(orders).values(orderData).returning({ id: orders.id });
   if (result && items.length > 0) {
     await db.insert(orderItems).values(items.map(item => ({ ...item, orderId: result.id })));
   }
@@ -366,7 +368,7 @@ export async function getAdminStats() {
   const [orderCount] = await db.select({ count: sql<number>`count(*)` }).from(orders);
   const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
   const [pendingCount] = await db.select({ count: sql<number>`count(*)` }).from(vendors).where(eq(vendors.status, "pending"));
-  const [revenueResult] = await db.select({ total: sql<string>`COALESCE(SUM(totalAmount), 0)` }).from(orders);
+  const [revenueResult] = await db.select({ total: sql<string>`COALESCE(SUM("totalAmount"), 0)` }).from(orders);
   return {
     totalVendors: Number(vendorCount?.count || 0),
     totalProducts: Number(productCount?.count || 0),
