@@ -48,7 +48,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <div className="min-h-screen flex flex-col">
+          <div className="min-h-screen flex flex-col zen-bg">
             <Navbar />
             <main className="flex-1">
               <Router />

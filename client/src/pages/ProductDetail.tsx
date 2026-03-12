@@ -27,7 +27,7 @@ export default function ProductDetail() {
   if (product.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary/90" />
       </div>
     );
   }
@@ -35,9 +35,9 @@ export default function ProductDetail() {
   const p = product.data;
   if (!p) {
     return (
-      <div className="container py-20 text-center">
-        <h2 className="text-xl font-semibold mb-2">Product not found</h2>
-        <Link href="/products"><Button variant="outline">Browse Parts</Button></Link>
+      <div className="container py-24 text-center">
+        <h2 className="text-xl font-light tracking-wide mb-3">Product not found</h2>
+        <Link href="/products"><Button variant="outline" className="rounded-full border-border/30 tracking-wide">Browse Parts</Button></Link>
       </div>
     );
   }
@@ -50,18 +50,18 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container py-6">
+      <div className="container py-10">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 mb-6">
-          <Link href="/products" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary no-underline">
+        <div className="flex items-center gap-2 mb-8">
+          <Link href="/products" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary/90 no-underline tracking-wide">
             <ArrowLeft className="h-4 w-4" /> Back to Parts
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* Images */}
-          <div className="space-y-3">
-            <div className="aspect-square bg-muted rounded-xl overflow-hidden">
+          <div className="space-y-4">
+            <div className="aspect-square bg-white/50 backdrop-blur-xl rounded-3xl overflow-hidden shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
               {images.length > 0 ? (
                 <img
                   src={images[selectedImage] || images[0]}
@@ -75,13 +75,13 @@ export default function ProductDetail() {
               )}
             </div>
             {images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="flex gap-3 overflow-x-auto pb-1">
                 {images.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
-                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 ${
-                      i === selectedImage ? "border-primary" : "border-transparent"
+                    className={`w-16 h-16 rounded-2xl overflow-hidden border-2 flex-shrink-0 transition-all duration-300 ${
+                      i === selectedImage ? "border-primary/90 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]" : "border-transparent opacity-70 hover:opacity-100"
                     }`}
                   >
                     <img src={img} alt="" className="w-full h-full object-cover" />
@@ -92,37 +92,37 @@ export default function ProductDetail() {
           </div>
 
           {/* Details */}
-          <div className="space-y-5">
+          <div className="space-y-6">
             {/* Vehicle Compatibility */}
             {p.vehicleMake && (
-              <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">
+              <p className="text-sm text-muted-foreground font-medium uppercase tracking-[0.08em]">
                 {p.vehicleMake} {p.vehicleModel}
                 {p.yearFrom && ` • ${p.yearFrom}${p.yearTo ? `–${p.yearTo}` : "+"}`}
               </p>
             )}
 
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{p.name}</h1>
+            <h1 className="text-2xl md:text-3xl font-light tracking-wide text-foreground">{p.name}</h1>
 
             <div className="flex items-center gap-3 flex-wrap">
-              <Badge variant={p.condition === "new" ? "default" : "secondary"}>
+              <Badge variant={p.condition === "new" ? "default" : "secondary"} className="rounded-full tracking-wide">
                 {p.condition === "new" ? "Brand New" : p.condition === "used" ? "Used / Tokunbo" : "Refurbished"}
               </Badge>
-              {p.brand && <Badge variant="outline">{p.brand}</Badge>}
+              {p.brand && <Badge variant="outline" className="rounded-full border-border/30 tracking-wide">{p.brand}</Badge>}
               {p.quantity !== undefined && p.quantity > 0 && (
-                <span className="text-sm text-voom-green font-medium flex items-center gap-1">
+                <span className="text-sm text-voom-green font-medium flex items-center gap-1 tracking-wide">
                   <ShieldCheck className="h-4 w-4" /> In Stock ({p.quantity} available)
                 </span>
               )}
               {p.quantity === 0 && (
-                <span className="text-sm text-destructive font-medium">Out of Stock</span>
+                <span className="text-sm text-destructive font-medium tracking-wide">Out of Stock</span>
               )}
             </div>
 
             {/* Price */}
-            <div className="bg-primary/5 rounded-xl p-5">
-              <p className="text-3xl font-extrabold text-primary">{formatGHS(p.price)}</p>
+            <div className="bg-white/50 backdrop-blur-xl rounded-3xl p-6 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+              <p className="text-3xl font-light tracking-[0.03em] text-primary/90">{formatGHS(p.price)}</p>
               {p.minOrderQty && p.minOrderQty > 1 && (
-                <p className="text-sm text-muted-foreground mt-1">Min. order: {p.minOrderQty} units</p>
+                <p className="text-sm text-muted-foreground mt-1.5 tracking-wide">Min. order: {p.minOrderQty} units</p>
               )}
             </div>
 
@@ -130,7 +130,7 @@ export default function ProductDetail() {
             <div className="flex gap-3">
               <Button
                 size="lg"
-                className="flex-1 h-12 text-white"
+                className="flex-1 h-13 text-white rounded-full tracking-wide shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]"
                 disabled={p.quantity === 0 || addToCart.isPending}
                 onClick={() => {
                   if (!isAuthenticated) {
@@ -146,7 +146,7 @@ export default function ProductDetail() {
                 {addToCart.isPending ? "Adding..." : "Add to Cart"}
               </Button>
               {whatsappLink && (
-                <Button size="lg" variant="outline" className="h-12 border-voom-green text-voom-green hover:bg-voom-green/5" asChild>
+                <Button size="lg" variant="outline" className="h-13 border-voom-green/60 text-voom-green hover:bg-voom-green/5 rounded-full tracking-wide" asChild>
                   <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="no-underline">
                     <MessageCircle className="h-5 w-5 mr-2" />
                     WhatsApp
@@ -158,38 +158,38 @@ export default function ProductDetail() {
             {/* Description */}
             {p.description && (
               <div>
-                <h3 className="font-semibold mb-2">Description</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{p.description}</p>
+                <h3 className="font-medium tracking-wide mb-3">Description</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap tracking-wide">{p.description}</p>
               </div>
             )}
 
-            <Separator />
+            <Separator className="bg-border/30" />
 
             {/* Vendor Card */}
             {vendor && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Store className="h-6 w-6 text-primary" />
+              <Card className="zen-card rounded-3xl border-white/20 glass shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Store className="h-6 w-6 text-primary/90" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <Link href={`/vendors/${vendor.id}`} className="font-semibold text-foreground hover:text-primary no-underline">
+                      <Link href={`/vendors/${vendor.id}`} className="font-medium tracking-wide text-foreground hover:text-primary/90 no-underline">
                         {vendor.businessName}
                       </Link>
                       {vendor.city && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1 tracking-wide">
                           <MapPin className="h-3.5 w-3.5" /> {vendor.city}, {vendor.region}
                         </p>
                       )}
                       {vendor.phone && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1 tracking-wide">
                           <Phone className="h-3.5 w-3.5" /> {vendor.phone}
                         </p>
                       )}
                     </div>
                     <Link href={`/vendors/${vendor.id}`}>
-                      <Button variant="outline" size="sm">View Shop</Button>
+                      <Button variant="outline" size="sm" className="rounded-full border-border/30 tracking-wide">View Shop</Button>
                     </Link>
                   </div>
                 </CardContent>
