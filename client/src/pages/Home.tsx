@@ -240,8 +240,19 @@ export default function Home() {
       </section>
 
       {/* CTA for Vendors — glass overlay */}
-      <section className="zen-section" style={{ background: "rgba(255,255,255,0.3)" }}>
-        <div className="container text-center">
+      <section className="zen-section relative overflow-hidden" style={{ background: "#fff" }}>
+        {/* Background image fading in from the right */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: "url('/cta-bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "40% center",
+          backgroundRepeat: "no-repeat",
+          WebkitMaskImage: "linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 35%, transparent 62%)",
+          maskImage: "linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 35%, transparent 62%)",
+        }} />
+        <div className="container text-center relative z-10">
           <h2 className="text-3xl font-light text-foreground mb-5 tracking-wide">Are You a Spare Parts Dealer?</h2>
           <p className="text-muted-foreground max-w-lg mx-auto mb-10 tracking-wide leading-relaxed">
             Join VOOM and reach thousands of buyers across Ghana. List your products, manage orders, and grow your business digitally.
