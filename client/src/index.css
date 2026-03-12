@@ -262,8 +262,15 @@
 
   /* ── Zen section spacing (extra breathing room) ── */
   .zen-section {
-    padding-top: 4.5rem;
-    padding-bottom: 4.5rem;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  @media (min-width: 640px) {
+    .zen-section {
+      padding-top: 4rem;
+      padding-bottom: 4rem;
+    }
   }
 
   @media (min-width: 768px) {

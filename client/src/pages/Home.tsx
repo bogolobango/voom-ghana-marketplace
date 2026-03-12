@@ -44,27 +44,27 @@ export default function Home() {
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat"
       }}>
-        <div className="container relative py-20 md:py-28 lg:py-32">
-          <div className="max-w-2xl space-y-8">
-            <div className="inline-flex items-center gap-2.5 glass-dark rounded-full px-5 py-2 text-sm text-white/80 tracking-wide">
-              <Store className="h-4 w-4 text-primary/80" />
+        <div className="container relative py-14 md:py-28 lg:py-32">
+          <div className="max-w-2xl space-y-6 md:space-y-8">
+            <div className="inline-flex items-center gap-2.5 glass-dark rounded-full px-4 py-1.5 text-xs sm:text-sm text-white/80 tracking-wide">
+              <Store className="h-3.5 w-3.5 text-primary/80" />
               Ghana's Digital Car Parts Marketplace
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white leading-[1.1] tracking-[0.02em]">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-white leading-[1.1] tracking-[0.02em]">
               Find the Right Part.{" "}
               <span className="text-primary font-normal">Fast.</span>
             </h1>
-            <p className="text-lg text-white/55 max-w-lg leading-relaxed tracking-wide font-light">
-              Search thousands of genuine and affordable car parts from verified vendors across Ghana. From Abossey Okai to your doorstep.
+            <p className="text-base sm:text-lg text-white/55 max-w-lg leading-relaxed tracking-wide font-light">
+              Search thousands of genuine and affordable car parts from verified vendors across Ghana.
             </p>
 
             {/* Search Bar — frosted glass capsule */}
-            <div className="flex gap-3 max-w-lg">
-              <div className="relative flex-1">
+            <div className="flex gap-2 sm:gap-3 max-w-lg">
+              <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
                 <Input
-                  placeholder="Search parts, e.g. 'Toyota Camry brake pads'"
-                  className="pl-11 h-13 bg-white/90 text-foreground border-white/30 rounded-[100px] shadow-[0_8px_32px_-6px_rgba(0,0,0,0.12)] backdrop-blur-xl"
+                  placeholder="Search parts, e.g. 'brake pads'"
+                  className="pl-11 h-12 sm:h-13 bg-white/90 text-foreground border-white/30 rounded-[100px] shadow-[0_8px_32px_-6px_rgba(0,0,0,0.12)] backdrop-blur-xl text-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
@@ -76,7 +76,7 @@ export default function Home() {
               </div>
               <Button
                 size="lg"
-                className="h-13 px-7 bg-primary/90 hover:bg-primary text-white rounded-[100px] shadow-[0_8px_32px_-6px_rgba(0,0,0,0.15)]"
+                className="h-12 sm:h-13 px-5 sm:px-7 bg-primary/90 hover:bg-primary text-white rounded-[100px] shadow-[0_8px_32px_-6px_rgba(0,0,0,0.15)] shrink-0 text-sm sm:text-base"
                 onClick={() => {
                   if (searchQuery.trim()) {
                     window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`;
@@ -88,18 +88,18 @@ export default function Home() {
             </div>
 
             {/* Quick Stats — glass tiles */}
-            <div className="flex gap-6 pt-6">
-              <div className="glass-dark rounded-2xl px-5 py-3">
-                <p className="text-2xl font-light text-white tracking-wide">1,000+</p>
-                <p className="text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Parts Listed</p>
+            <div className="flex flex-wrap gap-3 pt-2 sm:pt-4">
+              <div className="glass-dark rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3">
+                <p className="text-xl sm:text-2xl font-light text-white tracking-wide">1,000+</p>
+                <p className="text-[10px] sm:text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Parts Listed</p>
               </div>
-              <div className="glass-dark rounded-2xl px-5 py-3">
-                <p className="text-2xl font-light text-white tracking-wide">50+</p>
-                <p className="text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Verified Vendors</p>
+              <div className="glass-dark rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3">
+                <p className="text-xl sm:text-2xl font-light text-white tracking-wide">50+</p>
+                <p className="text-[10px] sm:text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Verified Vendors</p>
               </div>
-              <div className="glass-dark rounded-2xl px-5 py-3">
-                <p className="text-2xl font-light text-white tracking-wide">16</p>
-                <p className="text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Regions</p>
+              <div className="glass-dark rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3">
+                <p className="text-xl sm:text-2xl font-light text-white tracking-wide">16</p>
+                <p className="text-[10px] sm:text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Regions</p>
               </div>
             </div>
           </div>

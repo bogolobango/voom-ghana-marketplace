@@ -120,10 +120,10 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="rounded-full" asChild>
+              <Button variant="ghost" size="sm" className="rounded-full hidden sm:inline-flex" asChild>
                 <a href={getLoginUrl()}>Sign In</a>
               </Button>
-              <Button size="sm" className="rounded-full shadow-[0_4px_16px_-4px_rgba(0,0,0,0.10)]" asChild>
+              <Button size="sm" className="rounded-full shadow-[0_4px_16px_-4px_rgba(0,0,0,0.10)] text-xs sm:text-sm px-3 sm:px-4" asChild>
                 <a href={getLoginUrl()} className="text-white no-underline">
                   Sell Parts
                 </a>
@@ -131,11 +131,11 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Menu Toggle — only on small screens */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-muted-foreground rounded-2xl"
+            className="md:hidden text-muted-foreground rounded-2xl ml-0.5"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -149,13 +149,23 @@ export default function Navbar() {
           <MobileNavLink href="/products" onClick={() => setMobileOpen(false)}>Browse Parts</MobileNavLink>
           <MobileNavLink href="/vendors" onClick={() => setMobileOpen(false)}>Vendors</MobileNavLink>
           <MobileNavLink href="/categories" onClick={() => setMobileOpen(false)}>Categories</MobileNavLink>
-          {isAuthenticated && (
+          {isAuthenticated ? (
             <>
               <MobileNavLink href="/orders" onClick={() => setMobileOpen(false)}>My Orders</MobileNavLink>
               {user?.role !== "user" && (
                 <MobileNavLink href="/vendor/dashboard" onClick={() => setMobileOpen(false)}>Vendor Dashboard</MobileNavLink>
               )}
             </>
+          ) : (
+            <div className="pt-2 border-t border-white/10 mt-2">
+              <a
+                href={getLoginUrl()}
+                className="block px-4 py-3 rounded-2xl text-sm tracking-wide text-primary font-medium no-underline hover:bg-primary/5 transition-colors"
+                onClick={() => setMobileOpen(false)}
+              >
+                Sign In
+              </a>
+            </div>
           )}
         </div>
       )}

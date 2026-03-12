@@ -11,9 +11,9 @@ export default function Footer() {
         background: "radial-gradient(ellipse at 30% 20%, oklch(0.40 0.06 55 / 0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, oklch(0.35 0.04 200 / 0.06) 0%, transparent 45%)"
       }} />
       <div className="container relative py-14">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10">
           {/* Brand */}
-          <div className="space-y-4">
+          <div className="col-span-2 md:col-span-1 space-y-4">
             <div className="flex items-center">
               <img src="/voom-logo.png" alt="VOOM" className="h-10 w-auto brightness-0 invert" />
             </div>
