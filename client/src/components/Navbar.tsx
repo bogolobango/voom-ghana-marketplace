@@ -25,10 +25,10 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 glass-strong shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
-      <div className="container flex items-center justify-between h-16">
+      <div className="container flex items-center justify-between h-24">
         {/* Logo */}
         <Link href="/" className="flex items-center no-underline">
-          <img src="/voom-logo.png" alt="VOOM" className="h-10 w-auto" />
+          <img src="/voom-logo.png" alt="VOOM" className="h-20 w-auto" />
         </Link>
 
         {/* Desktop Nav */}
