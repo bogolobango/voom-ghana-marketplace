@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { GHANA_REGIONS, GHANA_CITIES } from "@shared/marketplace";
-import { Store, Loader2, CheckCircle2, ArrowRight, ShieldCheck, Zap, Users } from "lucide-react";
+import { Loader2, CheckCircle2, ArrowRight, ShieldCheck, Zap, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -46,9 +46,6 @@ export default function VendorRegister() {
     return (
       <div className="min-h-screen flex flex-col">
         <div className="vendor-hero flex-shrink-0 flex flex-col items-center justify-center px-6 py-20 text-center">
-          <div className="vendor-hero-icon mb-6">
-            <Store className="h-9 w-9 text-white" />
-          </div>
           <h1 className="text-3xl font-light tracking-wide text-white mb-3">Become a Vendor</h1>
           <p className="text-white/60 mb-10 max-w-xs leading-relaxed">
             Sign in to list your spare parts on Ghana's digital marketplace.
@@ -110,9 +107,6 @@ export default function VendorRegister() {
         <div
           className={`transition-all duration-700 delay-100 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
-          <div className="vendor-hero-icon mx-auto mb-5">
-            <Store className="h-9 w-9 text-white" />
-          </div>
           <h1 className="text-3xl sm:text-4xl font-light tracking-wide text-white mb-3 leading-tight">
             Register as a<br />Vendor
           </h1>
