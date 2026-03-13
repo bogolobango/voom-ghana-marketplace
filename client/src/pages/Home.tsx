@@ -208,8 +208,8 @@ export default function Home() {
             />
             <ValueCard
               icon={<Truck className="h-7 w-7" />}
-              title="Nationwide Delivery"
-              description="From Accra to Tamale, get parts delivered across all 16 regions of Ghana with tracked shipping."
+              title="In-Person Pickup"
+              description="Browse online and collect directly from the vendor. Meet at their location and inspect your parts before you buy."
             />
           </div>
         </div>
