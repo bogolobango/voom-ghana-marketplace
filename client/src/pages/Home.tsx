@@ -29,8 +29,8 @@ export default function Home() {
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat"
       }}>
-        <div className="container relative py-14 md:py-28 lg:py-32">
-          <div className="max-w-2xl space-y-6 md:space-y-8">
+        <div className="container relative py-8 md:py-12 lg:py-14">
+          <div className="max-w-2xl space-y-4 md:space-y-5">
             <div className="inline-flex items-center gap-2.5 glass-dark rounded-full px-4 py-1.5 text-xs sm:text-sm text-white/80 tracking-wide">
               <Store className="h-3.5 w-3.5 text-primary/80" />
               Ghana's Digital Car Parts Marketplace
@@ -73,7 +73,7 @@ export default function Home() {
             </div>
 
             {/* Quick Stats — glass tiles */}
-            <div className="flex flex-wrap gap-3 pt-2 sm:pt-4">
+            <div className="flex flex-wrap gap-3 pt-1">
               <div className="glass-dark rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3">
                 <p className="text-xl sm:text-2xl font-light text-white tracking-wide">1,000+</p>
                 <p className="text-[10px] sm:text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Parts Listed</p>
@@ -104,7 +104,7 @@ export default function Home() {
       {/* Categories Grid — glassmorphism tiles */}
       <section className="zen-section relative">
         <div className="container">
-          <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-2xl font-light text-foreground tracking-wide">Shop by Category</h2>
               <p className="text-sm text-muted-foreground mt-2 tracking-wide">Find parts organized by system</p>
