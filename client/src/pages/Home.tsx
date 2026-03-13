@@ -6,9 +6,10 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { getLoginUrl } from "@/const";
 import ProductCard from "@/components/ProductCard";
+import CategoryOrb from "@/components/CategoryOrb";
 import {
   Search, ArrowRight, ShieldCheck, Truck, MessageCircle,
-  Cog, Store,
+  Store,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -114,28 +115,9 @@ export default function Home() {
               </Button>
             </Link>
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+          <div className="flex flex-wrap justify-center gap-8 py-4">
             {(categories.data || []).slice(0, 10).map((cat) => (
-              <Link key={cat.id} href={`/products?categoryId=${cat.id}`} className="no-underline">
-                <Card className="hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.10)] hover:-translate-y-1 transition-all duration-300 group cursor-pointer h-full zen-card border-white/25 bg-white/60 backdrop-blur-sm">
-                  <CardContent className="p-4 flex flex-col items-center gap-3 text-center">
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-white/80 to-slate-50/60 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] group-hover:scale-105 transition-transform duration-300">
-                      {cat.icon ? (
-                        <img
-                          src={`/icons/${cat.icon}.png`}
-                          alt={cat.name}
-                          className="w-14 h-14 object-contain drop-shadow-sm"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center text-primary/70">
-                          <Cog className="h-7 w-7" />
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-xs font-medium text-foreground/80 leading-tight tracking-wide">{cat.name}</span>
-                  </CardContent>
-                </Card>
-              </Link>
+              <CategoryOrb key={cat.id} id={cat.id} name={cat.name} slug={cat.slug} icon={cat.icon} />
             ))}
           </div>
         </div>
