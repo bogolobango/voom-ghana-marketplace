@@ -8,11 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, LogIn, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/_core/hooks/useAuth";
-
 export default function SignIn() {
   const [, navigate] = useLocation();
-  const { isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
 
   const params = new URLSearchParams(window.location.search);
@@ -23,7 +20,7 @@ export default function SignIn() {
 
   const login = trpc.auth.login.useMutation({
     onSuccess: async () => {
-      await utils.auth.me.invalidate();
+      await utils.auth.me.refetch();
       toast.success("Welcome back!");
       navigate(redirect);
     },
@@ -32,17 +29,12 @@ export default function SignIn() {
 
   const signup = trpc.auth.signup.useMutation({
     onSuccess: async () => {
-      await utils.auth.me.invalidate();
+      await utils.auth.me.refetch();
       toast.success("Account created! Welcome to VOOM.");
       navigate(redirect);
     },
     onError: (e) => toast.error(e.message),
   });
-
-  if (isAuthenticated) {
-    navigate(redirect);
-    return null;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-white px-4 py-12">
