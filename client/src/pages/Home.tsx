@@ -8,25 +8,9 @@ import { getLoginUrl } from "@/const";
 import ProductCard from "@/components/ProductCard";
 import {
   Search, ArrowRight, ShieldCheck, Truck, MessageCircle,
-  Cog, CircleStop, ArrowUpDown, Zap, Car, Settings,
-  Wind, Thermometer, Droplets, Lightbulb, Circle, Armchair, Store,
+  Cog, Store,
 } from "lucide-react";
 import { useState } from "react";
-
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  "engine-parts": <Cog className="h-6 w-6" />,
-  "brake-system": <CircleStop className="h-6 w-6" />,
-  "suspension": <ArrowUpDown className="h-6 w-6" />,
-  "electrical": <Zap className="h-6 w-6" />,
-  "body-parts": <Car className="h-6 w-6" />,
-  "transmission": <Settings className="h-6 w-6" />,
-  "exhaust-system": <Wind className="h-6 w-6" />,
-  "cooling-system": <Thermometer className="h-6 w-6" />,
-  "filters-fluids": <Droplets className="h-6 w-6" />,
-  "lighting": <Lightbulb className="h-6 w-6" />,
-  "tires-wheels": <Circle className="h-6 w-6" />,
-  "interior": <Armchair className="h-6 w-6" />,
-};
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
@@ -130,13 +114,23 @@ export default function Home() {
               </Button>
             </Link>
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-            {(categories.data || []).slice(0, 12).map((cat) => (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+            {(categories.data || []).slice(0, 10).map((cat) => (
               <Link key={cat.id} href={`/products?categoryId=${cat.id}`} className="no-underline">
-                <Card className="hover:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.06)] transition-all duration-400 group cursor-pointer h-full zen-card border-white/25">
-                  <CardContent className="p-5 flex flex-col items-center gap-3 text-center">
-                    <div className="w-13 h-13 rounded-2xl bg-primary/8 flex items-center justify-center text-primary group-hover:bg-primary/90 group-hover:text-white transition-all duration-400 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.03)]">
-                      {CATEGORY_ICONS[cat.slug] || <Cog className="h-6 w-6" />}
+                <Card className="hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.10)] hover:-translate-y-1 transition-all duration-300 group cursor-pointer h-full zen-card border-white/25 bg-white/60 backdrop-blur-sm">
+                  <CardContent className="p-4 flex flex-col items-center gap-3 text-center">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-white/80 to-slate-50/60 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] group-hover:scale-105 transition-transform duration-300">
+                      {cat.icon ? (
+                        <img
+                          src={`/icons/${cat.icon}.png`}
+                          alt={cat.name}
+                          className="w-14 h-14 object-contain drop-shadow-sm"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center text-primary/70">
+                          <Cog className="h-7 w-7" />
+                        </div>
+                      )}
                     </div>
                     <span className="text-xs font-medium text-foreground/80 leading-tight tracking-wide">{cat.name}</span>
                   </CardContent>
