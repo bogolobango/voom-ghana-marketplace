@@ -19,6 +19,7 @@ import Orders from "./pages/Orders";
 import Notifications from "./pages/Notifications";
 import Categories from "./pages/Categories";
 import AdminDashboard from "./pages/AdminDashboard";
+import SignIn from "./pages/SignIn";
 
 function Router() {
   return (
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/notifications" component={Notifications} />
       <Route path="/categories" component={Categories} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/sign-in" component={SignIn} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -1,9 +1,11 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { sdk } from "./_core/sdk";
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import * as bcrypt from "bcryptjs";
 import * as db from "./db";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -28,6 +30,35 @@ export const appRouter = router({
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      return { success: true } as const;
+    }),
+    signup: publicProcedure.input(z.object({
+      name: z.string().min(1),
+      email: z.string().email(),
+      password: z.string().min(8),
+    })).mutation(async ({ ctx, input }) => {
+      const existing = await db.getUserByEmail(input.email);
+      if (existing) throw new Error("Email is already registered");
+      const openId = `local_${nanoid(16)}`;
+      const passwordHash = await bcrypt.hash(input.password, 10);
+      await db.upsertUser({ openId, email: input.email, name: input.name, loginMethod: "email", lastSignedIn: new Date() });
+      await db.setUserPasswordHash(openId, passwordHash);
+      const token = await sdk.createSessionToken(openId, { name: input.name });
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      return { success: true } as const;
+    }),
+    login: publicProcedure.input(z.object({
+      email: z.string().email(),
+      password: z.string().min(1),
+    })).mutation(async ({ ctx, input }) => {
+      const user = await db.getUserByEmail(input.email);
+      if (!user || !user.passwordHash) throw new Error("Invalid email or password");
+      const valid = await bcrypt.compare(input.password, user.passwordHash);
+      if (!valid) throw new Error("Invalid email or password");
+      const token = await sdk.createSessionToken(user.openId, { name: user.name ?? "" });
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       return { success: true } as const;
     }),
   }),

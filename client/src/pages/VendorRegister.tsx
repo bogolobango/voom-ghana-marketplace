@@ -6,12 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { GHANA_REGIONS, GHANA_CITIES } from "@shared/marketplace";
 import { Store, Loader2, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getLoginUrl } from "@/const";
 
 export default function VendorRegister() {
   const { isAuthenticated, loading } = useAuth();
@@ -45,7 +44,7 @@ export default function VendorRegister() {
         <h2 className="text-2xl font-light tracking-wide mb-3">Become a Vendor</h2>
         <p className="text-muted-foreground/70 mb-8 tracking-wide">Sign in to register your spare parts business on VOOM.</p>
         <Button size="lg" className="rounded-full px-8" asChild>
-          <a href={getLoginUrl()}>Sign In to Continue</a>
+          <Link href="/sign-in?redirect=/vendor/register" className="no-underline text-white">Sign In to Continue</Link>
         </Button>
       </div>
     );

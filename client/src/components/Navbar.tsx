@@ -1,5 +1,4 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -121,12 +120,12 @@ export default function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="rounded-full hidden sm:inline-flex" asChild>
-                <a href={getLoginUrl()}>Sign In</a>
+                <Link href="/sign-in" className="no-underline">Sign In</Link>
               </Button>
               <Button size="sm" className="rounded-full shadow-[0_4px_16px_-4px_rgba(0,0,0,0.10)] text-xs sm:text-sm px-3 sm:px-4" asChild>
-                <a href={getLoginUrl()} className="text-white no-underline">
+                <Link href="/sign-in?redirect=/vendor/register" className="text-white no-underline">
                   Sell Parts
-                </a>
+                </Link>
               </Button>
             </div>
           )}
@@ -152,19 +151,28 @@ export default function Navbar() {
           {isAuthenticated ? (
             <>
               <MobileNavLink href="/orders" onClick={() => setMobileOpen(false)}>My Orders</MobileNavLink>
-              {user?.role !== "user" && (
+              {user?.role === "vendor" || user?.role === "admin" ? (
                 <MobileNavLink href="/vendor/dashboard" onClick={() => setMobileOpen(false)}>Vendor Dashboard</MobileNavLink>
+              ) : (
+                <MobileNavLink href="/vendor/register" onClick={() => setMobileOpen(false)}>Sell Parts</MobileNavLink>
               )}
             </>
           ) : (
-            <div className="pt-2 border-t border-white/10 mt-2">
-              <a
-                href={getLoginUrl()}
+            <div className="pt-2 border-t border-white/10 mt-2 space-y-1">
+              <Link
+                href="/sign-in"
                 className="block px-4 py-3 rounded-2xl text-sm tracking-wide text-primary font-medium no-underline hover:bg-primary/5 transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
                 Sign In
-              </a>
+              </Link>
+              <Link
+                href="/sign-in?redirect=/vendor/register"
+                className="block px-4 py-3 rounded-2xl text-sm tracking-wide text-foreground font-medium no-underline hover:bg-primary/5 transition-colors"
+                onClick={() => setMobileOpen(false)}
+              >
+                Sell Parts
+              </Link>
             </div>
           )}
         </div>
