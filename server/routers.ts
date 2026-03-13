@@ -11,6 +11,7 @@ import { storagePut } from "./storage";
 import { checkRateLimit, RATE_LIMITS } from "./rateLimit";
 import { sanitizeInput } from "./sanitize";
 import { logger } from "./logger";
+import { sendVendorWelcomeEmail, sendVendorApprovalEmail } from "./email";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== "admin") {
@@ -163,6 +164,11 @@ export const appRouter = router({
       region: z.string().max(100).optional(),
       latitude: z.string().optional(),
       longitude: z.string().optional(),
+      // Identity verification
+      ghanaCardNumber: z.string().min(1, "Ghana Card number is required").max(30),
+      ghanaCardImageUrl: z.string().url().optional(),
+      businessRegNumber: z.string().max(50).optional(),
+      businessRegImageUrl: z.string().url().optional(),
     })).mutation(async ({ ctx, input }) => {
       const sanitized = sanitizeInput(input);
       const existing = await db.getVendorByUserId(ctx.user.id);
@@ -178,10 +184,40 @@ export const appRouter = router({
       // Update user role to vendor
       await db.updateUserRole(ctx.user.id, "vendor");
       logger.info("Vendor registered", { userId: ctx.user.id, vendorId: result?.id });
+
+      // Send welcome email (non-blocking)
+      const userEmail = sanitized.email || ctx.user.email;
+      if (userEmail) {
+        sendVendorWelcomeEmail({
+          email: userEmail,
+          businessName: sanitized.businessName,
+          vendorName: ctx.user.name || undefined,
+        }).catch((err) => logger.error("Failed to send welcome email", { error: String(err) }));
+      }
+
+      // Notify all admins about new vendor registration
+      const admins = await db.getAdminUsers();
+      for (const admin of admins) {
+        await db.createNotification({
+          userId: admin.id,
+          title: "New Vendor Registration",
+          message: `${sanitized.businessName} has registered as a vendor. Ghana Card: ${sanitized.ghanaCardNumber}${sanitized.businessRegNumber ? `, Business Reg: ${sanitized.businessRegNumber}` : ""}`,
+          type: "vendor",
+          link: "/admin",
+        });
+      }
+
       return { success: true, vendorId: result?.id, status: "approved" as const };
     }),
     me: protectedProcedure.query(async ({ ctx }) => {
-      return db.getVendorByUserId(ctx.user.id);
+      const vendor = await db.getVendorByUserId(ctx.user.id);
+      // Auto-approve pending vendors from before auto-approve was added (MVP migration)
+      if (vendor && vendor.status === "pending") {
+        await db.updateVendorStatus(vendor.id, "approved");
+        await db.updateUserRole(ctx.user.id, "vendor");
+        return { ...vendor, status: "approved" as const };
+      }
+      return vendor;
     }),
     getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
       return db.getVendorById(input.id);
@@ -630,12 +666,25 @@ export const appRouter = router({
       await db.updateVendorStatus(input.id, input.status);
       const vendor = await db.getVendorById(input.id);
       if (vendor) {
+        // Update user role when approved
+        if (input.status === "approved") {
+          await db.updateUserRole(vendor.userId, "vendor");
+        }
         await db.createNotification({
           userId: vendor.userId,
           title: "Vendor Status Updated",
           message: `Your vendor application has been ${input.status}.`,
           type: "vendor",
         });
+        // Send status email to vendor
+        const vendorEmail = vendor.email;
+        if (vendorEmail) {
+          sendVendorApprovalEmail({
+            email: vendorEmail,
+            businessName: vendor.businessName,
+            status: input.status,
+          }).catch((err) => logger.error("Failed to send vendor status email", { error: String(err) }));
+        }
       }
       return { success: true };
     }),

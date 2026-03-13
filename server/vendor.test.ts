@@ -26,53 +26,62 @@ function createUserContext(overrides: Partial<AuthenticatedUser> = {}): TrpcCont
   };
 }
 
+const validRegInput = { businessName: "Shop", phone: "0241234567", ghanaCardNumber: "GHA-123456789-0" };
+
 describe("vendor.register — validation", () => {
   it("rejects without auth", async () => {
     const caller = appRouter.createCaller(createPublicContext());
     await expect(
-      caller.vendor.register({ businessName: "Shop", phone: "0241234567" })
+      caller.vendor.register(validRegInput)
     ).rejects.toThrow();
   });
 
   it("rejects empty business name", async () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(
-      caller.vendor.register({ businessName: "", phone: "0241234567" })
+      caller.vendor.register({ ...validRegInput, businessName: "" })
     ).rejects.toThrow();
   });
 
   it("rejects empty phone", async () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(
-      caller.vendor.register({ businessName: "Shop", phone: "" })
+      caller.vendor.register({ ...validRegInput, phone: "" })
     ).rejects.toThrow();
   });
 
   it("rejects invalid Ghana phone", async () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(
-      caller.vendor.register({ businessName: "Shop", phone: "1234567890" })
+      caller.vendor.register({ ...validRegInput, phone: "1234567890" })
     ).rejects.toThrow("valid Ghana phone number");
+  });
+
+  it("rejects missing Ghana Card number", async () => {
+    const caller = appRouter.createCaller(createUserContext());
+    await expect(
+      caller.vendor.register({ businessName: "Shop", phone: "0241234567" } as any)
+    ).rejects.toThrow();
   });
 
   it("rejects business name exceeding max length", async () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(
-      caller.vendor.register({ businessName: "A".repeat(256), phone: "0241234567" })
+      caller.vendor.register({ ...validRegInput, businessName: "A".repeat(256) })
     ).rejects.toThrow();
   });
 
   it("rejects invalid email format", async () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(
-      caller.vendor.register({ businessName: "Shop", phone: "0241234567", email: "bad-email" })
+      caller.vendor.register({ ...validRegInput, email: "bad-email" })
     ).rejects.toThrow();
   });
 
   it("rejects description exceeding max length", async () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(
-      caller.vendor.register({ businessName: "Shop", phone: "0241234567", description: "A".repeat(2001) })
+      caller.vendor.register({ ...validRegInput, description: "A".repeat(2001) })
     ).rejects.toThrow();
   });
 });

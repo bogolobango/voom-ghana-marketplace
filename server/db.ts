@@ -143,6 +143,13 @@ export async function createCategory(data: { name: string; slug: string; icon?: 
   await db.insert(categories).values(data);
 }
 
+// ─── Admin Helpers ───
+export async function getAdminUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.role, "admin"));
+}
+
 // ─── Vendor Helpers ───
 export async function createVendor(data: InsertVendor) {
   const db = await getDb();
