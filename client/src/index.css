@@ -427,3 +427,80 @@ main {
 .category-orb-wrapper:hover .orb-label {
   color: hsl(var(--primary));
 }
+
+/* ── Vendor Register page ── */
+.vendor-hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.53 0.22 25 / 0.18) 0%, transparent 70%),
+    oklch(0.13 0.02 250);
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.vendor-hero-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: oklch(0.53 0.22 25 / 0.22);
+  border: 1px solid oklch(0.53 0.22 25 / 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 0 8px oklch(0.53 0.22 25 / 0.07),
+    0 0 40px oklch(0.53 0.22 25 / 0.25);
+}
+
+.vendor-input {
+  border-radius: 14px;
+  border-color: oklch(0.88 0 0 / 50%);
+  background: oklch(0.985 0 0);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vendor-input:focus,
+.vendor-input:focus-within {
+  border-color: oklch(0.53 0.22 25 / 60%);
+  box-shadow: 0 0 0 3px oklch(0.53 0.22 25 / 10%);
+  outline: none;
+}
+
+.vendor-cta {
+  background: linear-gradient(135deg, oklch(0.57 0.22 25) 0%, oklch(0.48 0.20 18) 100%);
+  color: white;
+  border: none;
+  box-shadow:
+    0 4px 16px oklch(0.53 0.22 25 / 30%),
+    0 1px 3px oklch(0.53 0.22 25 / 20%);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.vendor-cta:not(:disabled):hover {
+  box-shadow:
+    0 8px 28px oklch(0.53 0.22 25 / 38%),
+    0 2px 6px oklch(0.53 0.22 25 / 22%);
+  transform: translateY(-1px);
+}
+
+.vendor-cta:not(:disabled):active {
+  transform: translateY(0px);
+  box-shadow: 0 2px 8px oklch(0.53 0.22 25 / 25%);
+}
+
+.vendor-field {
+  animation: fieldFadeUp 0.4s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes fieldFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.vendor-field:nth-child(1) { animation-delay: 0.30s; }
+.vendor-field:nth-child(2) { animation-delay: 0.38s; }
+.vendor-field:nth-child(3) { animation-delay: 0.46s; }
+.vendor-field:nth-child(4) { animation-delay: 0.54s; }
+.vendor-field:nth-child(5) { animation-delay: 0.62s; }
