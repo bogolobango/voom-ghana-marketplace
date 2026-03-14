@@ -140,7 +140,7 @@ export default function VendorDashboard() {
         const result = await uploadImage.mutateAsync({
           base64,
           fileName: file.name,
-          contentType: file.type,
+          contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "image/gif" | "image/avif",
         });
         setProductImages((prev) => [...prev, result.url]);
       }

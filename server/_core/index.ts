@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import helmet from "helmet";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
@@ -31,9 +32,28 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Security headers
+  app.use(helmet({
+    contentSecurityPolicy: false, // Let Vite handle CSP in dev
+    crossOriginEmbedderPolicy: false, // Allow image loading from external CDNs
+  }));
+
+  // Body parser with reasonable size limit (base64 images ~7MB raw = ~10MB encoded)
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+  // CSRF protection: require custom header on state-changing API requests
+  app.use("/api/trpc", (req, res, next) => {
+    if (req.method !== "GET" && req.method !== "HEAD" && req.method !== "OPTIONS") {
+      const csrfHeader = req.headers["x-trpc-source"];
+      if (!csrfHeader) {
+        res.status(403).json({ error: "Missing CSRF header" });
+        return;
+      }
+    }
+    next();
+  });
 
   // Request logging (non-static routes only)
   app.use("/api", (req, _res, next) => {

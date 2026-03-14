@@ -96,7 +96,7 @@ export default function VendorRegister() {
         reader.onload = () => resolve((reader.result as string).split(",")[1]);
         reader.readAsDataURL(file);
       });
-      const result = await uploadImage.mutateAsync({ base64, fileName: file.name, contentType: file.type });
+      const result = await uploadImage.mutateAsync({ base64, fileName: file.name, contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "image/gif" | "image/avif" });
       setForm((prev) => ({ ...prev, [field]: result.url }));
       toast.success("Document uploaded");
     } catch (err: any) { toast.error(err.message || "Upload failed"); }

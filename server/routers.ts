@@ -60,9 +60,12 @@ export const appRouter = router({
       }
       if (!user) throw new Error("Failed to create account");
 
-      // Generate OTP — for MVP, use "1234" (real SMS in Phase 2)
-      const otp = "1234";
+      // Generate a random 4-digit OTP
+      const otp = String(Math.floor(1000 + Math.random() * 9000));
       await db.saveOtp(user.id, otp);
+
+      // TODO: Send OTP via SMS (e.g. Hubtel, Arkesel). For now, log it server-side only.
+      logger.info("OTP generated", { phone: cleanPhone, otp });
 
       logger.info("OTP requested", { phone: cleanPhone, isNewUser });
 
@@ -93,7 +96,9 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie(COOKIE_NAME, token, cookieOptions);
 
-      return { success: true, user };
+      // Strip sensitive fields before returning
+      const { otpCode: _otp, otpExpiresAt: _otpExp, ...safeUser } = user;
+      return { success: true, user: safeUser };
     }),
     updateProfile: protectedProcedure.input(z.object({
       name: z.string().min(1).max(255).optional(),
@@ -112,22 +117,28 @@ export const appRouter = router({
   // ─── File Upload ───
   upload: router({
     image: protectedProcedure.input(z.object({
-      base64: z.string().min(1),
+      base64: z.string().min(1).max(7_000_000), // ~5MB file = ~6.7MB base64
       fileName: z.string().min(1).max(255),
-      contentType: z.string().refine(
-        (v) => v.startsWith("image/"),
-        { message: "Only image files are allowed" }
-      ),
+      contentType: z.enum([
+        "image/jpeg", "image/png", "image/webp", "image/gif", "image/avif",
+      ], { message: "Only JPEG, PNG, WebP, GIF, and AVIF images are allowed" }),
     })).mutation(async ({ ctx, input }) => {
       // Rate limit uploads per user
       checkRateLimit(`upload:${ctx.user.id}`, RATE_LIMITS.upload);
 
       const buffer = Buffer.from(input.base64, "base64");
-      // Max 5MB
+      // Max 5MB decoded
       if (buffer.length > 5 * 1024 * 1024) {
         throw new Error("Image must be less than 5MB");
       }
-      const ext = input.fileName.split(".").pop() || "jpg";
+
+      // Whitelist file extensions
+      const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif"]);
+      const ext = (input.fileName.split(".").pop() || "").toLowerCase();
+      if (!ALLOWED_EXTENSIONS.has(ext)) {
+        throw new Error("File extension not allowed. Use: jpg, png, webp, gif, or avif");
+      }
+
       const key = `products/${ctx.user.id}/${nanoid(12)}.${ext}`;
       const result = await storagePut(key, buffer, input.contentType);
       logger.info("Image uploaded", { userId: ctx.user.id, key });
