@@ -14,7 +14,7 @@ import { formatGHS, VEHICLE_MAKES, PART_CONDITIONS } from "@shared/marketplace";
 import {
   Package, ShoppingCart, Plus, Loader2, Store, TrendingUp,
   Edit, Trash2, Eye, Upload, X, ChevronDown, ChevronUp, User, MapPin, Phone as PhoneIcon,
-  MessageSquare, CheckCircle, XCircle,
+  MessageSquare, CheckCircle, XCircle, ArrowLeft, ArrowRight, ImageIcon, Car, Tag,
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
@@ -212,207 +212,20 @@ export default function VendorDashboard() {
           <TabsContent value="products">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-medium tracking-wide">My Products</h2>
-              <Dialog open={showAddProduct} onOpenChange={setShowAddProduct}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="gap-1 text-white rounded-full">
-                    <Plus className="h-4 w-4" /> Add Product
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-white/80 backdrop-blur-xl border-white/20">
-                  <DialogHeader>
-                    <DialogTitle className="font-light tracking-wide text-lg">Add New Product</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-5 pt-3">
-                    <div>
-                      <Label className="tracking-wide">Product Name *</Label>
-                      <Input
-                        value={productForm.name}
-                        onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                        placeholder="e.g. Front Brake Pads Set"
-                        className="rounded-2xl border-border/30"
-                      />
-                    </div>
-                    <div>
-                      <Label className="tracking-wide">Description</Label>
-                      <Textarea
-                        value={productForm.description}
-                        onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                        placeholder="Product details, specifications..."
-                        rows={3}
-                        className="rounded-2xl border-border/30"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="tracking-wide">Price (GH₵) *</Label>
-                        <Input
-                          value={productForm.price}
-                          onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                          placeholder="0.00"
-                          type="number"
-                          step="0.01"
-                          className="rounded-2xl border-border/30"
-                        />
-                      </div>
-                      <div>
-                        <Label className="tracking-wide">Quantity</Label>
-                        <Input
-                          value={productForm.quantity}
-                          onChange={(e) => setProductForm({ ...productForm, quantity: e.target.value })}
-                          type="number"
-                          className="rounded-2xl border-border/30"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="tracking-wide">Category</Label>
-                        <Select value={productForm.categoryId} onValueChange={(v) => setProductForm({ ...productForm, categoryId: v })}>
-                          <SelectTrigger className="rounded-2xl border-border/30"><SelectValue placeholder="Select" /></SelectTrigger>
-                          <SelectContent className="rounded-2xl">
-                            {(categories.data || []).map((cat) => (
-                              <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="tracking-wide">Condition</Label>
-                        <Select value={productForm.condition} onValueChange={(v: any) => setProductForm({ ...productForm, condition: v })}>
-                          <SelectTrigger className="rounded-2xl border-border/30"><SelectValue /></SelectTrigger>
-                          <SelectContent className="rounded-2xl">
-                            {PART_CONDITIONS.map((c) => (
-                              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="tracking-wide">Brand</Label>
-                        <Input
-                          value={productForm.brand}
-                          onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })}
-                          placeholder="e.g. Bosch, Denso"
-                          className="rounded-2xl border-border/30"
-                        />
-                      </div>
-                      <div>
-                        <Label className="tracking-wide">SKU</Label>
-                        <Input
-                          value={productForm.sku}
-                          onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
-                          placeholder="Optional"
-                          className="rounded-2xl border-border/30"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="tracking-wide">OEM Part Number</Label>
-                      <Input
-                        value={productForm.oemPartNumber}
-                        onChange={(e) => setProductForm({ ...productForm, oemPartNumber: e.target.value })}
-                        placeholder="e.g. 04465-33471"
-                        className="rounded-2xl border-border/30"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="tracking-wide">Vehicle Make</Label>
-                        <Select value={productForm.vehicleMake} onValueChange={(v) => setProductForm({ ...productForm, vehicleMake: v })}>
-                          <SelectTrigger className="rounded-2xl border-border/30"><SelectValue placeholder="Select" /></SelectTrigger>
-                          <SelectContent className="rounded-2xl">
-                            {VEHICLE_MAKES.map((make) => (
-                              <SelectItem key={make} value={make}>{make}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="tracking-wide">Vehicle Model</Label>
-                        <Input
-                          value={productForm.vehicleModel}
-                          onChange={(e) => setProductForm({ ...productForm, vehicleModel: e.target.value })}
-                          placeholder="e.g. Camry, Corolla"
-                          className="rounded-2xl border-border/30"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="tracking-wide">Year From</Label>
-                        <Input
-                          value={productForm.yearFrom}
-                          onChange={(e) => setProductForm({ ...productForm, yearFrom: e.target.value })}
-                          placeholder="e.g. 2010"
-                          type="number"
-                          className="rounded-2xl border-border/30"
-                        />
-                      </div>
-                      <div>
-                        <Label className="tracking-wide">Year To</Label>
-                        <Input
-                          value={productForm.yearTo}
-                          onChange={(e) => setProductForm({ ...productForm, yearTo: e.target.value })}
-                          placeholder="e.g. 2024"
-                          type="number"
-                          className="rounded-2xl border-border/30"
-                        />
-                      </div>
-                    </div>
-                    {/* Image Upload */}
-                    <div>
-                      <Label className="tracking-wide">Product Images (max 5)</Label>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {productImages.map((url, i) => (
-                          <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/30">
-                            <img src={url} alt="" className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => setProductImages((prev) => prev.filter((_, j) => j !== i))}
-                              className="absolute top-0 right-0 bg-black/50 rounded-bl-lg p-0.5"
-                            >
-                              <X className="h-3 w-3 text-white" />
-                            </button>
-                          </div>
-                        ))}
-                        {productImages.length < 5 && (
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={uploadingImage}
-                            className="w-16 h-16 rounded-xl border-2 border-dashed border-border/40 flex items-center justify-center hover:border-primary/40 transition-colors"
-                          >
-                            {uploadingImage ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                            ) : (
-                              <Upload className="h-4 w-4 text-muted-foreground/60" />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <Button
-                      className="w-full text-white rounded-full"
-                      disabled={createProduct.isPending}
-                      onClick={handleAddProduct}
-                    >
-                      {createProduct.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                      List Product
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <AddProductWizard
+                open={showAddProduct}
+                onOpenChange={setShowAddProduct}
+                productForm={productForm}
+                setProductForm={setProductForm}
+                productImages={productImages}
+                setProductImages={setProductImages}
+                uploadingImage={uploadingImage}
+                fileInputRef={fileInputRef}
+                handleImageUpload={handleImageUpload}
+                handleAddProduct={handleAddProduct}
+                createProductPending={createProduct.isPending}
+                categories={categories.data || []}
+              />
             </div>
 
             {products.length > 0 ? (
@@ -698,6 +511,271 @@ export default function VendorDashboard() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+const PRODUCT_STEPS = [
+  { id: 1, label: "Basics", icon: Tag },
+  { id: 2, label: "Vehicle", icon: Car },
+  { id: 3, label: "Images", icon: ImageIcon },
+] as const;
+
+function AddProductWizard({
+  open, onOpenChange, productForm, setProductForm, productImages, setProductImages,
+  uploadingImage, fileInputRef, handleImageUpload, handleAddProduct, createProductPending,
+  categories,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  productForm: any;
+  setProductForm: (v: any) => void;
+  productImages: string[];
+  setProductImages: React.Dispatch<React.SetStateAction<string[]>>;
+  uploadingImage: boolean;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleAddProduct: () => void;
+  createProductPending: boolean;
+  categories: { id: number; name: string }[];
+}) {
+  const [step, setStep] = useState(1);
+
+  const resetAndClose = (v: boolean) => {
+    if (!v) setStep(1);
+    onOpenChange(v);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={resetAndClose}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="gap-1 text-white rounded-full">
+          <Plus className="h-4 w-4" /> Add Product
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-white/80 backdrop-blur-xl border-white/20">
+        <DialogHeader>
+          <DialogTitle className="font-light tracking-wide text-lg">Add New Product</DialogTitle>
+        </DialogHeader>
+
+        {/* Step indicator */}
+        <div className="flex items-center justify-center gap-0 pt-2 pb-4">
+          {PRODUCT_STEPS.map((s, i) => {
+            const Icon = s.icon;
+            const isActive = step === s.id;
+            const isCompleted = step > s.id;
+            return (
+              <div key={s.id} className="flex items-center">
+                <div className="flex flex-col items-center gap-1">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs transition-all ${
+                      isCompleted ? "bg-primary text-white" : isActive ? "bg-primary/15 text-primary ring-2 ring-primary/30" : "bg-muted/30 text-muted-foreground/40"
+                    }`}
+                  >
+                    {isCompleted ? <CheckCircle className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
+                  </div>
+                  <span className={`text-[10px] tracking-wide ${isActive ? "text-primary font-medium" : "text-muted-foreground/50"}`}>
+                    {s.label}
+                  </span>
+                </div>
+                {i < PRODUCT_STEPS.length - 1 && (
+                  <div className={`w-12 h-0.5 mx-2 mb-4 rounded-full ${step > s.id ? "bg-primary" : "bg-muted/20"}`} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="space-y-5">
+          {/* Step 1: Basics */}
+          {step === 1 && (
+            <>
+              <p className="text-xs text-muted-foreground/60 tracking-wide">Enter the essential product details. Fields marked * are required.</p>
+              <div>
+                <Label className="tracking-wide">Product Name *</Label>
+                <Input
+                  value={productForm.name}
+                  onChange={(e: any) => setProductForm({ ...productForm, name: e.target.value })}
+                  placeholder="e.g. Front Brake Pads Set"
+                  className="rounded-2xl border-border/30"
+                />
+              </div>
+              <div>
+                <Label className="tracking-wide">Description</Label>
+                <Textarea
+                  value={productForm.description}
+                  onChange={(e: any) => setProductForm({ ...productForm, description: e.target.value })}
+                  placeholder="Product details, specifications..."
+                  rows={3}
+                  className="rounded-2xl border-border/30"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="tracking-wide">Price (GH₵) *</Label>
+                  <Input
+                    value={productForm.price}
+                    onChange={(e: any) => setProductForm({ ...productForm, price: e.target.value })}
+                    placeholder="0.00" type="number" step="0.01"
+                    className="rounded-2xl border-border/30"
+                  />
+                </div>
+                <div>
+                  <Label className="tracking-wide">Quantity</Label>
+                  <Input
+                    value={productForm.quantity}
+                    onChange={(e: any) => setProductForm({ ...productForm, quantity: e.target.value })}
+                    type="number" className="rounded-2xl border-border/30"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="tracking-wide">Category</Label>
+                  <Select value={productForm.categoryId} onValueChange={(v) => setProductForm({ ...productForm, categoryId: v })}>
+                    <SelectTrigger className="rounded-2xl border-border/30"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent className="rounded-2xl">
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="tracking-wide">Condition</Label>
+                  <Select value={productForm.condition} onValueChange={(v: any) => setProductForm({ ...productForm, condition: v })}>
+                    <SelectTrigger className="rounded-2xl border-border/30"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-2xl">
+                      {PART_CONDITIONS.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="tracking-wide">Brand</Label>
+                  <Input value={productForm.brand} onChange={(e: any) => setProductForm({ ...productForm, brand: e.target.value })} placeholder="e.g. Bosch, Denso" className="rounded-2xl border-border/30" />
+                </div>
+                <div>
+                  <Label className="tracking-wide">SKU</Label>
+                  <Input value={productForm.sku} onChange={(e: any) => setProductForm({ ...productForm, sku: e.target.value })} placeholder="Optional" className="rounded-2xl border-border/30" />
+                </div>
+              </div>
+              <div>
+                <Label className="tracking-wide">OEM Part Number</Label>
+                <Input value={productForm.oemPartNumber} onChange={(e: any) => setProductForm({ ...productForm, oemPartNumber: e.target.value })} placeholder="e.g. 04465-33471" className="rounded-2xl border-border/30" />
+              </div>
+              <div className="flex justify-end pt-2">
+                <Button onClick={() => {
+                  if (!productForm.name || !productForm.price) { toast.error("Product name and price are required"); return; }
+                  setStep(2);
+                }} className="rounded-full text-white gap-2 px-6">
+                  Next: Vehicle Fit <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          )}
+
+          {/* Step 2: Vehicle Compatibility */}
+          {step === 2 && (
+            <>
+              <p className="text-xs text-muted-foreground/60 tracking-wide">
+                Which vehicles does this part fit? This helps buyers find your product when searching by car. You can skip this if the part is universal.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="tracking-wide">Vehicle Make</Label>
+                  <Select value={productForm.vehicleMake} onValueChange={(v) => setProductForm({ ...productForm, vehicleMake: v })}>
+                    <SelectTrigger className="rounded-2xl border-border/30"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent className="rounded-2xl">
+                      {VEHICLE_MAKES.map((make) => (
+                        <SelectItem key={make} value={make}>{make}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="tracking-wide">Vehicle Model</Label>
+                  <Input value={productForm.vehicleModel} onChange={(e: any) => setProductForm({ ...productForm, vehicleModel: e.target.value })} placeholder="e.g. Camry, Corolla" className="rounded-2xl border-border/30" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="tracking-wide">Year From</Label>
+                  <Input value={productForm.yearFrom} onChange={(e: any) => setProductForm({ ...productForm, yearFrom: e.target.value })} placeholder="e.g. 2010" type="number" className="rounded-2xl border-border/30" />
+                </div>
+                <div>
+                  <Label className="tracking-wide">Year To</Label>
+                  <Input value={productForm.yearTo} onChange={(e: any) => setProductForm({ ...productForm, yearTo: e.target.value })} placeholder="e.g. 2024" type="number" className="rounded-2xl border-border/30" />
+                </div>
+              </div>
+              <div className="flex justify-between pt-2">
+                <Button variant="outline" onClick={() => setStep(1)} className="rounded-full gap-2 border-white/20">
+                  <ArrowLeft className="h-4 w-4" /> Back
+                </Button>
+                <Button onClick={() => setStep(3)} className="rounded-full text-white gap-2 px-6">
+                  Next: Photos <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          )}
+
+          {/* Step 3: Images */}
+          {step === 3 && (
+            <>
+              <p className="text-xs text-muted-foreground/60 tracking-wide">
+                Add up to 5 clear photos of your product. Good photos increase sales significantly.
+              </p>
+              <div>
+                <Label className="tracking-wide">Product Images (max 5)</Label>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {productImages.map((url, i) => (
+                    <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-border/30">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => setProductImages((prev) => prev.filter((_, j) => j !== i))} className="absolute top-0 right-0 bg-black/50 rounded-bl-lg p-0.5">
+                        <X className="h-3 w-3 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                  {productImages.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="w-20 h-20 rounded-xl border-2 border-dashed border-border/40 flex flex-col items-center justify-center gap-1 hover:border-primary/40 transition-colors"
+                    >
+                      {uploadingImage ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <Upload className="h-5 w-5 text-muted-foreground/60" />
+                          <span className="text-[9px] text-muted-foreground/50">Add Photo</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between pt-2">
+                <Button variant="outline" onClick={() => setStep(2)} className="rounded-full gap-2 border-white/20">
+                  <ArrowLeft className="h-4 w-4" /> Back
+                </Button>
+                <Button
+                  className="rounded-full text-white gap-2 px-6"
+                  disabled={createProductPending}
+                  onClick={handleAddProduct}
+                >
+                  {createProductPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  List Product
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

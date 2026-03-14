@@ -42,7 +42,6 @@ export const vendors = pgTable("vendors", {
   region: varchar("region", { length: 100 }),
   latitude: decimal("latitude", { precision: 10, scale: 7 }),
   longitude: decimal("longitude", { precision: 10, scale: 7 }),
-  // Identity & business verification
   ghanaCardNumber: varchar("ghanaCardNumber", { length: 30 }),
   ghanaCardImageUrl: text("ghanaCardImageUrl"),
   businessRegNumber: varchar("businessRegNumber", { length: 50 }),

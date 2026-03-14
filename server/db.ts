@@ -143,7 +143,6 @@ export async function createCategory(data: { name: string; slug: string; icon?: 
   await db.insert(categories).values(data);
 }
 
-// ─── Admin Helpers ───
 export async function getAdminUsers() {
   const db = await getDb();
   if (!db) return [];
@@ -241,6 +240,7 @@ export async function searchProducts(filters: {
   condition?: string;
   minPrice?: number;
   maxPrice?: number;
+  sortBy?: "newest" | "price_asc" | "price_desc";
   limit?: number;
   offset?: number;
 }) {
@@ -274,12 +274,40 @@ export async function searchProducts(filters: {
   const limit = Math.min(filters.limit || 20, 100); // Cap at 100
   const offset = filters.offset || 0;
 
+  const sortOrder = filters.sortBy === "price_asc"
+    ? asc(products.price)
+    : filters.sortBy === "price_desc"
+    ? desc(products.price)
+    : desc(products.createdAt); // default: newest
+
   const [items, countResult] = await Promise.all([
-    db.select().from(products).where(where).orderBy(desc(products.createdAt)).limit(limit).offset(offset),
+    db.select().from(products).where(where).orderBy(sortOrder).limit(limit).offset(offset),
     db.select({ count: sql<number>`count(*)` }).from(products).where(where),
   ]);
 
   return { products: items, total: Number(countResult[0]?.count || 0) };
+}
+
+export async function autocompleteProducts(query: string, limit = 8) {
+  const db = await getDb();
+  if (!db) return [];
+  const results = await db
+    .select({ id: products.id, name: products.name, brand: products.brand, vehicleMake: products.vehicleMake })
+    .from(products)
+    .where(
+      and(
+        eq(products.status, "active"),
+        or(
+          like(products.name, `%${query}%`),
+          like(products.brand, `%${query}%`),
+          like(products.oemPartNumber, `%${query}%`),
+          like(products.vehicleMake, `%${query}%`),
+          like(products.vehicleModel, `%${query}%`)
+        )!
+      )
+    )
+    .limit(limit);
+  return results;
 }
 
 export async function getFeaturedProducts(limit = 8) {

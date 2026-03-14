@@ -87,14 +87,8 @@ export default function VendorRegister() {
     setUploading: (v: boolean) => void,
     field: "ghanaCardImageUrl" | "businessRegImageUrl"
   ) => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File must be less than 5MB");
-      return;
-    }
+    if (!file.type.startsWith("image/")) { toast.error("Please upload an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("File must be less than 5MB"); return; }
     setUploading(true);
     try {
       const base64 = await new Promise<string>((resolve) => {
@@ -102,32 +96,18 @@ export default function VendorRegister() {
         reader.onload = () => resolve((reader.result as string).split(",")[1]);
         reader.readAsDataURL(file);
       });
-      const result = await uploadImage.mutateAsync({
-        base64,
-        fileName: file.name,
-        contentType: file.type,
-      });
+      const result = await uploadImage.mutateAsync({ base64, fileName: file.name, contentType: file.type });
       setForm((prev) => ({ ...prev, [field]: result.url }));
       toast.success("Document uploaded");
-    } catch (err: any) {
-      toast.error(err.message || "Upload failed");
-    } finally {
-      setUploading(false);
-    }
+    } catch (err: any) { toast.error(err.message || "Upload failed"); }
+    finally { setUploading(false); }
   };
 
   const handleSubmit = async () => {
-    if (!form.businessName || !form.phone) {
-      toast.error("Business name and phone number are required");
-      return;
-    }
-    if (!form.ghanaCardNumber) {
-      toast.error("Ghana Card number is required for verification");
-      return;
-    }
+    if (!form.businessName || !form.phone) { toast.error("Business name and phone number are required"); return; }
+    if (!form.ghanaCardNumber) { toast.error("Ghana Card number is required for verification"); return; }
     try {
       const payload: Record<string, any> = { ...form };
-      // Only send non-empty optional URL fields
       if (!payload.ghanaCardImageUrl) delete payload.ghanaCardImageUrl;
       if (!payload.businessRegImageUrl) delete payload.businessRegImageUrl;
       if (!payload.businessRegNumber) delete payload.businessRegNumber;
@@ -240,64 +220,36 @@ export default function VendorRegister() {
               </div>
             </div>
 
-            {/* Identity Verification Section */}
+            {/* Ghana Card Section */}
             <div className="pt-4 border-t border-border/20">
               <div className="flex items-center gap-2 mb-4">
                 <CreditCard className="h-5 w-5 text-primary/70" />
                 <h3 className="font-medium tracking-wide">Identity Verification</h3>
               </div>
               <p className="text-xs text-muted-foreground/70 tracking-wide mb-5">
-                A valid Ghana Card is required to verify your identity. This helps build trust with buyers.
+                A valid Ghana Card is required to verify your identity.
               </p>
-
               <div>
                 <Label className="tracking-wide">Ghana Card Number *</Label>
-                <Input
-                  className="rounded-2xl border-border/30 mt-1.5"
-                  value={form.ghanaCardNumber}
-                  onChange={(e) => setForm({ ...form, ghanaCardNumber: e.target.value })}
-                  placeholder="GHA-XXXXXXXXX-X"
-                />
+                <Input className="rounded-2xl border-border/30 mt-1.5" value={form.ghanaCardNumber}
+                  onChange={(e) => setForm({ ...form, ghanaCardNumber: e.target.value })} placeholder="GHA-XXXXXXXXX-X" />
               </div>
-
               <div className="mt-4">
                 <Label className="tracking-wide">Ghana Card Photo (front)</Label>
-                <input
-                  ref={ghanaCardInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleDocUpload(file, setUploadingGhanaCard, "ghanaCardImageUrl");
-                    e.target.value = "";
-                  }}
-                />
+                <input ref={ghanaCardInputRef} type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDocUpload(f, setUploadingGhanaCard, "ghanaCardImageUrl"); e.target.value = ""; }} />
                 {form.ghanaCardImageUrl ? (
                   <div className="relative mt-2 w-full h-32 rounded-2xl overflow-hidden border border-border/30 bg-muted/20">
                     <img src={form.ghanaCardImageUrl} alt="Ghana Card" className="w-full h-full object-contain" />
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, ghanaCardImageUrl: "" })}
-                      className="absolute top-2 right-2 bg-black/50 rounded-full p-1"
-                    >
+                    <button type="button" onClick={() => setForm({ ...form, ghanaCardImageUrl: "" })} className="absolute top-2 right-2 bg-black/50 rounded-full p-1">
                       <X className="h-3 w-3 text-white" />
                     </button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => ghanaCardInputRef.current?.click()}
-                    disabled={uploadingGhanaCard}
-                    className="w-full mt-2 h-24 rounded-2xl border-2 border-dashed border-border/30 flex flex-col items-center justify-center gap-1.5 hover:border-primary/40 transition-colors"
-                  >
-                    {uploadingGhanaCard ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    ) : (
-                      <>
-                        <Upload className="h-5 w-5 text-muted-foreground/50" />
-                        <span className="text-xs text-muted-foreground/60 tracking-wide">Upload Ghana Card photo</span>
-                      </>
+                  <button type="button" onClick={() => ghanaCardInputRef.current?.click()} disabled={uploadingGhanaCard}
+                    className="w-full mt-2 h-24 rounded-2xl border-2 border-dashed border-border/30 flex flex-col items-center justify-center gap-1.5 hover:border-primary/40 transition-colors">
+                    {uploadingGhanaCard ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
+                      <><Upload className="h-5 w-5 text-muted-foreground/50" /><span className="text-xs text-muted-foreground/60 tracking-wide">Upload Ghana Card photo</span></>
                     )}
                   </button>
                 )}
@@ -311,74 +263,38 @@ export default function VendorRegister() {
                 <h3 className="font-medium tracking-wide">Business Registration</h3>
               </div>
               <p className="text-xs text-muted-foreground/70 tracking-wide mb-5">
-                Optional — If your business is registered with the Registrar General's Department, provide the details below.
+                Optional — If your business is registered with the Registrar General's Department.
               </p>
-
               <div>
                 <Label className="tracking-wide">Business Registration Number</Label>
-                <Input
-                  className="rounded-2xl border-border/30 mt-1.5"
-                  value={form.businessRegNumber}
-                  onChange={(e) => setForm({ ...form, businessRegNumber: e.target.value })}
-                  placeholder="e.g. CS123456789"
-                />
+                <Input className="rounded-2xl border-border/30 mt-1.5" value={form.businessRegNumber}
+                  onChange={(e) => setForm({ ...form, businessRegNumber: e.target.value })} placeholder="e.g. CS123456789" />
               </div>
-
               <div className="mt-4">
                 <Label className="tracking-wide">Business Certificate Photo</Label>
-                <input
-                  ref={businessRegInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleDocUpload(file, setUploadingBusinessReg, "businessRegImageUrl");
-                    e.target.value = "";
-                  }}
-                />
+                <input ref={businessRegInputRef} type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDocUpload(f, setUploadingBusinessReg, "businessRegImageUrl"); e.target.value = ""; }} />
                 {form.businessRegImageUrl ? (
                   <div className="relative mt-2 w-full h-32 rounded-2xl overflow-hidden border border-border/30 bg-muted/20">
                     <img src={form.businessRegImageUrl} alt="Business Certificate" className="w-full h-full object-contain" />
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, businessRegImageUrl: "" })}
-                      className="absolute top-2 right-2 bg-black/50 rounded-full p-1"
-                    >
+                    <button type="button" onClick={() => setForm({ ...form, businessRegImageUrl: "" })} className="absolute top-2 right-2 bg-black/50 rounded-full p-1">
                       <X className="h-3 w-3 text-white" />
                     </button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => businessRegInputRef.current?.click()}
-                    disabled={uploadingBusinessReg}
-                    className="w-full mt-2 h-24 rounded-2xl border-2 border-dashed border-border/30 flex flex-col items-center justify-center gap-1.5 hover:border-primary/40 transition-colors"
-                  >
-                    {uploadingBusinessReg ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    ) : (
-                      <>
-                        <Upload className="h-5 w-5 text-muted-foreground/50" />
-                        <span className="text-xs text-muted-foreground/60 tracking-wide">Upload business certificate</span>
-                      </>
+                  <button type="button" onClick={() => businessRegInputRef.current?.click()} disabled={uploadingBusinessReg}
+                    className="w-full mt-2 h-24 rounded-2xl border-2 border-dashed border-border/30 flex flex-col items-center justify-center gap-1.5 hover:border-primary/40 transition-colors">
+                    {uploadingBusinessReg ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
+                      <><Upload className="h-5 w-5 text-muted-foreground/50" /><span className="text-xs text-muted-foreground/60 tracking-wide">Upload business certificate</span></>
                     )}
                   </button>
                 )}
               </div>
             </div>
 
-            <Button
-              className="w-full h-12 text-white rounded-full"
-              size="lg"
-              disabled={registerVendor.isPending || uploadingGhanaCard || uploadingBusinessReg}
-              onClick={handleSubmit}
-            >
-              {registerVendor.isPending ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...</>
-              ) : (
-                "Start Selling"
-              )}
+            <Button className="w-full h-12 text-white rounded-full" size="lg"
+              disabled={registerVendor.isPending || uploadingGhanaCard || uploadingBusinessReg} onClick={handleSubmit}>
+              {registerVendor.isPending ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...</>) : "Start Selling"}
             </Button>
             <p className="text-xs text-center text-muted-foreground/60 tracking-wide">
               You'll be able to list products immediately after registration.

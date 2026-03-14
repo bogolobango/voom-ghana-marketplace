@@ -164,7 +164,6 @@ export const appRouter = router({
       region: z.string().max(100).optional(),
       latitude: z.string().optional(),
       longitude: z.string().optional(),
-      // Identity verification
       ghanaCardNumber: z.string().min(1, "Ghana Card number is required").max(30),
       ghanaCardImageUrl: z.string().url().optional(),
       businessRegNumber: z.string().max(50).optional(),
@@ -174,14 +173,11 @@ export const appRouter = router({
       const existing = await db.getVendorByUserId(ctx.user.id);
       if (existing) throw new Error("You already have a vendor profile");
 
-      // Validate Ghana phone
       if (!isValidGhanaPhone(sanitized.phone)) {
         throw new Error("Please enter a valid Ghana phone number (e.g. 0241234567)");
       }
 
-      // Auto-approve vendors for MVP — they can start listing immediately
       const result = await db.createVendor({ ...sanitized, userId: ctx.user.id, status: "approved" });
-      // Update user role to vendor
       await db.updateUserRole(ctx.user.id, "vendor");
       logger.info("Vendor registered", { userId: ctx.user.id, vendorId: result?.id });
 
@@ -211,7 +207,7 @@ export const appRouter = router({
     }),
     me: protectedProcedure.query(async ({ ctx }) => {
       const vendor = await db.getVendorByUserId(ctx.user.id);
-      // Auto-approve pending vendors from before auto-approve was added (MVP migration)
+      // Auto-approve pending vendors from before auto-approve was added
       if (vendor && vendor.status === "pending") {
         await db.updateVendorStatus(vendor.id, "approved");
         await db.updateUserRole(ctx.user.id, "vendor");
@@ -333,10 +329,16 @@ export const appRouter = router({
       condition: z.string().optional(),
       minPrice: z.number().min(0).optional(),
       maxPrice: z.number().min(0).optional(),
+      sortBy: z.enum(["newest", "price_asc", "price_desc"]).optional(),
       limit: z.number().min(1).max(100).optional(),
       offset: z.number().min(0).optional(),
     })).query(async ({ input }) => {
       return db.searchProducts(input);
+    }),
+    autocomplete: publicProcedure.input(z.object({
+      query: z.string().min(1).max(100),
+    })).query(async ({ input }) => {
+      return db.autocompleteProducts(input.query);
     }),
     featured: publicProcedure.query(async () => {
       return db.getFeaturedProducts();
@@ -666,7 +668,6 @@ export const appRouter = router({
       await db.updateVendorStatus(input.id, input.status);
       const vendor = await db.getVendorById(input.id);
       if (vendor) {
-        // Update user role when approved
         if (input.status === "approved") {
           await db.updateUserRole(vendor.userId, "vendor");
         }
@@ -676,7 +677,6 @@ export const appRouter = router({
           message: `Your vendor application has been ${input.status}.`,
           type: "vendor",
         });
-        // Send status email to vendor
         const vendorEmail = vendor.email;
         if (vendorEmail) {
           sendVendorApprovalEmail({

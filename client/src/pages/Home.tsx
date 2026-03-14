@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "engine-parts": <Cog className="h-6 w-6" />,
@@ -29,6 +30,20 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "tires-wheels": <Circle className="h-6 w-6" />,
   "interior": <Armchair className="h-6 w-6" />,
 };
+
+function ProductCardSkeleton() {
+  return (
+    <Card className="overflow-hidden border-white/20 h-full zen-card">
+      <Skeleton className="aspect-square rounded-t-3xl" />
+      <CardContent className="p-4 space-y-2">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-5 w-16 mt-2" />
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
@@ -150,7 +165,7 @@ export default function Home() {
       </section>
 
       {/* Featured Products */}
-      {(featured.data?.length || 0) > 0 && (
+      {(featured.isLoading || (featured.data?.length || 0) > 0) && (
         <section className="zen-section" style={{ background: "rgba(255,255,255,0.25)" }}>
           <div className="container">
             <div className="flex items-center justify-between mb-10">
@@ -165,9 +180,12 @@ export default function Home() {
               </Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-              {featured.data?.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+              {featured.isLoading
+                ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)
+                : featured.data?.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))
+              }
             </div>
           </div>
         </section>
@@ -187,7 +205,11 @@ export default function Home() {
               </Button>
             </Link>
           </div>
-          {(latest.data?.length || 0) > 0 ? (
+          {latest.isLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+            </div>
+          ) : (latest.data?.length || 0) > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
               {latest.data?.map((product) => (
                 <ProductCard key={product.id} product={product} />
