@@ -210,11 +210,13 @@ export async function searchProducts(filters: {
   return { products: items, total: Number(countResult[0]?.count || 0) };
 }
 
+const hasRealImage = sql`${products.images}::text LIKE '%/images/parts/specific/%'`;
+
 export async function getFeaturedProducts(limit = 8) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(products)
-    .where(and(eq(products.status, "active"), eq(products.featured, true)))
+    .where(and(eq(products.status, "active"), eq(products.featured, true), hasRealImage))
     .orderBy(desc(products.createdAt)).limit(limit);
 }
 
@@ -222,7 +224,7 @@ export async function getLatestProducts(limit = 12) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(products)
-    .where(eq(products.status, "active"))
+    .where(and(eq(products.status, "active"), hasRealImage))
     .orderBy(desc(products.createdAt)).limit(limit);
 }
 
