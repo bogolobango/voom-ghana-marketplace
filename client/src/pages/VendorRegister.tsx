@@ -210,7 +210,6 @@ export default function VendorRegister() {
                 type="email"
               />
             </div>
-          </div>
 
             <div className="vendor-field">
               <Label className="tracking-wide text-sm font-medium">Ghana Card Number</Label>

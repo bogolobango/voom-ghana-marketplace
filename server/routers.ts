@@ -201,6 +201,7 @@ export const appRouter = router({
       condition: z.string().optional(),
       minPrice: z.number().optional(),
       maxPrice: z.number().optional(),
+      vendorId: z.number().optional(),
       limit: z.number().optional(),
       offset: z.number().optional(),
     })).query(async ({ input }) => {
