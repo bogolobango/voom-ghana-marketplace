@@ -8,7 +8,7 @@ import ProductCard from "@/components/ProductCard";
 import CategoryOrb from "@/components/CategoryOrb";
 import {
   Search, ArrowRight, ShieldCheck, Truck, MessageCircle,
-  Store, AlertTriangle,
+  Store, AlertTriangle, ChevronRight,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
@@ -125,10 +125,27 @@ export default function Home() {
               </Button>
             </div>
           )}
-          <div className="flex flex-wrap justify-center gap-8 py-4">
-            {(categories.data || []).slice(0, 10).map((cat) => (
-              <CategoryOrb key={cat.id} id={cat.id} name={cat.name} slug={cat.slug} icon={cat.icon} />
-            ))}
+          {/* Horizontal scroll strip — break out of container padding */}
+          <div className="relative -mx-4 sm:-mx-6 lg:-mx-8">
+            {/* Right-edge fade hint */}
+            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white/90 to-transparent pointer-events-none z-10" />
+            <div className="flex overflow-x-auto scrollbar-hide gap-8 py-6 pl-4 sm:pl-6 lg:pl-8 pr-16">
+              {(categories.data || []).map((cat) => (
+                <CategoryOrb key={cat.id} id={cat.id} name={cat.name} slug={cat.slug} icon={cat.icon} />
+              ))}
+            </div>
+          </div>
+          {/* Swipe indicator */}
+          <div className="flex justify-center mt-2 mb-1">
+            <div className="swipe-hint">
+              <div className="swipe-hint-icon">
+                <ChevronRight className="w-3 h-3" />
+              </div>
+              <span>swipe to explore</span>
+              <div className="swipe-hint-icon">
+                <ChevronRight className="w-3 h-3" />
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -25,11 +25,11 @@ export default function Categories() {
         </nav>
 
         {categories.isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 py-8">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center gap-3">
-                <Skeleton className="w-20 h-20 rounded-full" />
-                <Skeleton className="h-4 w-24" />
+          <div className="flex overflow-x-hidden gap-10 py-10 pl-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-3 flex-shrink-0">
+                <Skeleton className="w-[120px] h-[120px] rounded-full" />
+                <Skeleton className="h-4 w-28" />
               </div>
             ))}
           </div>
@@ -43,11 +43,29 @@ export default function Categories() {
             </Button>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-12 py-8">
-            {(categories.data || []).map((cat) => (
-              <CategoryOrb key={cat.id} id={cat.id} name={cat.name} slug={cat.slug} icon={cat.icon} />
-            ))}
-          </div>
+          <>
+            <div className="relative -mx-4 sm:-mx-6 lg:-mx-8">
+              {/* Right-edge fade hint */}
+              <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-slate-50/90 to-transparent pointer-events-none z-10" />
+              <div className="flex overflow-x-auto scrollbar-hide gap-8 py-8 pl-4 sm:pl-6 lg:pl-8 pr-16">
+                {(categories.data || []).map((cat) => (
+                  <CategoryOrb key={cat.id} id={cat.id} name={cat.name} slug={cat.slug} icon={cat.icon} />
+                ))}
+              </div>
+            </div>
+            {/* Swipe indicator */}
+            <div className="flex justify-center mt-2 mb-1">
+              <div className="swipe-hint">
+                <div className="swipe-hint-icon">
+                  <ChevronRight className="w-3 h-3" />
+                </div>
+                <span>swipe to explore</span>
+                <div className="swipe-hint-icon">
+                  <ChevronRight className="w-3 h-3" />
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

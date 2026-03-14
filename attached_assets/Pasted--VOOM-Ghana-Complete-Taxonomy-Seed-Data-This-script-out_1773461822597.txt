@@ -1,0 +1,704 @@
+/**
+
+- VOOM Ghana - Complete Taxonomy & Seed Data
+- 
+- This script outputs SQL that can be run against your PostgreSQL database
+- to populate the taxonomy (categories, makes, models, subcategories) and
+- create demo vendor shops with realistic listings based on real Ghana market prices.
+- 
+- Usage: node voom_seed.js > seed.sql
+- Then run: psql $DATABASE_URL < seed.sql
+- 
+- Or import the JSON exports into your Drizzle seed script.
+  */
+
+// ============================================================
+// PART 1: CATEGORIES - Based on Tonaton’s actual Ghana taxonomy
+// plus subcategories for deeper search
+// ============================================================
+
+const categories = [
+{
+id: 1, name: “Engine & Drivetrain”, slug: “engine-drivetrain”,
+subcategories: [
+“Engine Block”, “Cylinder Head”, “Piston & Rings”, “Timing Belt/Chain”,
+“Engine Mount”, “Turbocharger”, “Fuel Injector”, “Fuel Pump”,
+“Spark Plug”, “Ignition Coil”, “Valve Cover Gasket”, “Oil Pan”,
+“Crankshaft”, “Camshaft”, “Throttle Body”, “Intake Manifold”,
+“Exhaust Manifold”, “Catalytic Converter”, “EGR Valve”, “Alternator”,
+“Starter Motor”, “Flywheel”, “Drive Belt”, “Water Pump”
+]
+},
+{
+id: 2, name: “Brakes, Suspension & Steering”, slug: “brakes-suspension-steering”,
+subcategories: [
+“Brake Pads (Front)”, “Brake Pads (Rear)”, “Brake Disc/Rotor”,
+“Brake Caliper”, “Brake Master Cylinder”, “Brake Hose/Line”,
+“Shock Absorber (Front)”, “Shock Absorber (Rear)”, “Strut Assembly”,
+“Coil Spring”, “Leaf Spring”, “Control Arm (Upper)”, “Control Arm (Lower)”,
+“Ball Joint”, “Tie Rod End”, “Stabilizer/Sway Bar Link”,
+“Power Steering Pump”, “Steering Rack”, “Steering Column”,
+“Wheel Bearing”, “Hub Assembly”, “CV Joint”, “CV Axle/Driveshaft”,
+“Bushing Kit”
+]
+},
+{
+id: 3, name: “Exterior & Body Parts”, slug: “exterior-body”,
+subcategories: [
+“Front Bumper”, “Rear Bumper”, “Bumper Cover”, “Fender”,
+“Hood/Bonnet”, “Trunk/Boot Lid”, “Door (Complete)”, “Door Handle”,
+“Side Mirror”, “Grille”, “Mudguard/Fender Liner”, “Roof Rack”,
+“Running Board/Side Step”, “Spoiler”, “Windshield/Windscreen”,
+“Rear Window”, “Door Glass”, “Quarter Panel”, “Rocker Panel”,
+“Tailgate”
+]
+},
+{
+id: 4, name: “Headlights & Lighting”, slug: “headlights-lighting”,
+subcategories: [
+“Headlight Assembly (Left)”, “Headlight Assembly (Right)”,
+“Tail Light Assembly (Left)”, “Tail Light Assembly (Right)”,
+“Fog Light”, “Turn Signal Light”, “Side Marker Light”,
+“Third Brake Light”, “LED Light Bar”, “Headlight Bulb”,
+“Interior Light”, “License Plate Light”, “Reverse Light”,
+“DRL (Daytime Running Light)”
+]
+},
+{
+id: 5, name: “Cooling System”, slug: “cooling-system”,
+subcategories: [
+“Radiator”, “Radiator Fan”, “Radiator Hose (Upper)”, “Radiator Hose (Lower)”,
+“Thermostat”, “Coolant Reservoir/Expansion Tank”, “Water Pump”,
+“AC Condenser”, “AC Compressor”, “AC Evaporator”, “Heater Core”,
+“Intercooler”, “Oil Cooler”, “Radiator Cap”
+]
+},
+{
+id: 6, name: “Filters & Fluids”, slug: “filters-fluids”,
+subcategories: [
+“Oil Filter”, “Air Filter”, “Fuel Filter”, “Cabin/Pollen Filter”,
+“Transmission Filter”, “Engine Oil (5W-30)”, “Engine Oil (10W-40)”,
+“Engine Oil (15W-40)”, “Transmission Fluid”, “Brake Fluid”,
+“Coolant/Antifreeze”, “Power Steering Fluid”, “Windshield Washer Fluid”
+]
+},
+{
+id: 7, name: “Transmission & Clutch”, slug: “transmission-clutch”,
+subcategories: [
+“Transmission Assembly (Automatic)”, “Transmission Assembly (Manual)”,
+“Clutch Kit”, “Clutch Disc”, “Clutch Pressure Plate”, “Release Bearing”,
+“Gearbox Mount”, “Shift Cable”, “Torque Converter”,
+“Transfer Case”, “Differential”, “Propeller Shaft/Drive Shaft”
+]
+},
+{
+id: 8, name: “Electrical & Electronics”, slug: “electrical-electronics”,
+subcategories: [
+“Car Battery”, “Alternator”, “Starter Motor”, “Fuse Box”,
+“Wiring Harness”, “ECU/ECM (Engine Control Unit)”, “ABS Module”,
+“Window Regulator/Motor”, “Door Lock Actuator”, “Ignition Switch”,
+“Blower Motor”, “Horn”, “Relay”, “Sensor (O2/Lambda)”,
+“Sensor (Crankshaft Position)”, “Sensor (Camshaft Position)”,
+“Sensor (MAF/Mass Air Flow)”, “Sensor (MAP)”, “Sensor (Knock)”,
+“Speed Sensor (ABS/Wheel)”
+]
+},
+{
+id: 9, name: “Wheels & Tires”, slug: “wheels-tires”,
+subcategories: [
+“Alloy Wheel/Rim”, “Steel Wheel/Rim”, “Tire (New)”, “Tire (Used)”,
+“Spare Tire”, “Wheel Cover/Hubcap”, “Lug Nut”, “Wheel Stud”,
+“TPMS Sensor”, “Wheel Spacer”
+]
+},
+{
+id: 10, name: “Interior & Accessories”, slug: “interior-accessories”,
+subcategories: [
+“Seat (Complete)”, “Seat Cover”, “Floor Mat”, “Dashboard”,
+“Steering Wheel”, “Gear Knob/Shift Lever”, “Sun Visor”,
+“Rearview Mirror (Interior)”, “Center Console”, “Glove Box”,
+“Seat Belt”, “Airbag Module”, “Clock Spring”, “Instrument Cluster”,
+“Radio/Head Unit”, “Speaker”, “Amplifier”, “USB/AUX Adapter”
+]
+},
+{
+id: 11, name: “Audio & Entertainment”, slug: “audio-entertainment”,
+subcategories: [
+“Head Unit/Car Stereo”, “Speaker Set”, “Subwoofer”, “Amplifier”,
+“Bluetooth Adapter”, “Dash Cam”, “Reverse Camera”, “GPS Navigator”,
+“Android Auto/CarPlay Unit”, “Car Charger/Adapter”
+]
+},
+{
+id: 12, name: “Safety & Security”, slug: “safety-security”,
+subcategories: [
+“Car Alarm System”, “Central Locking Kit”, “Immobilizer”,
+“GPS Tracker”, “Dash Cam (Front)”, “Dash Cam (Dual)”, “Parking Sensor”,
+“Reverse Camera”, “First Aid Kit”, “Fire Extinguisher”,
+“Reflective Triangle”, “Wheel Lock/Clamp”
+]
+},
+];
+
+// ============================================================
+// PART 2: VEHICLE MAKES & MODELS - Based on Ghana market share
+// Tonaton data: Toyota 19K, Honda 15K, Hyundai 8K, Mercedes 4.3K,
+// Ford 3.3K, BMW 868, Acura 806
+// ============================================================
+
+const vehicleMakes = [
+{
+id: 1, name: “Toyota”,
+models: [
+{ name: “Corolla”, years: “2003-2024” },
+{ name: “Camry”, years: “2002-2024” },
+{ name: “RAV4”, years: “2006-2024” },
+{ name: “Hilux”, years: “2005-2024” },
+{ name: “Land Cruiser”, years: “2000-2024” },
+{ name: “Land Cruiser Prado”, years: “2003-2024” },
+{ name: “Yaris/Vitz”, years: “2005-2020” },
+{ name: “Highlander”, years: “2008-2024” },
+{ name: “4Runner”, years: “2003-2024” },
+{ name: “Tacoma”, years: “2005-2024” },
+{ name: “Tundra”, years: “2007-2024” },
+{ name: “Avalon”, years: “2005-2020” },
+{ name: “Matrix”, years: “2003-2014” },
+{ name: “Sienna”, years: “2004-2024” },
+{ name: “C-HR”, years: “2018-2024” },
+{ name: “Fortuner”, years: “2012-2024” },
+{ name: “Rush”, years: “2018-2024” },
+{ name: “Starlet”, years: “2020-2024” },
+]
+},
+{
+id: 2, name: “Honda”,
+models: [
+{ name: “Civic”, years: “2001-2024” },
+{ name: “Accord”, years: “2003-2024” },
+{ name: “CR-V”, years: “2002-2024” },
+{ name: “Fit/Jazz”, years: “2004-2020” },
+{ name: “HR-V”, years: “2016-2024” },
+{ name: “Pilot”, years: “2006-2024” },
+{ name: “Odyssey”, years: “2005-2024” },
+{ name: “Element”, years: “2003-2011” },
+{ name: “City”, years: “2009-2024” },
+{ name: “Vezel”, years: “2014-2024” },
+]
+},
+{
+id: 3, name: “Hyundai”,
+models: [
+{ name: “Tucson”, years: “2005-2024” },
+{ name: “Elantra”, years: “2007-2024” },
+{ name: “Sonata”, years: “2006-2024” },
+{ name: “Santa Fe”, years: “2007-2024” },
+{ name: “Accent”, years: “2006-2024” },
+{ name: “Creta”, years: “2016-2024” },
+{ name: “i10”, years: “2008-2024” },
+{ name: “i20”, years: “2009-2024” },
+{ name: “Kona”, years: “2018-2024” },
+{ name: “Venue”, years: “2020-2024” },
+]
+},
+{
+id: 4, name: “Nissan”,
+models: [
+{ name: “Almera”, years: “2000-2018” },
+{ name: “X-Trail”, years: “2004-2024” },
+{ name: “Pathfinder”, years: “2005-2024” },
+{ name: “Navara”, years: “2005-2024” },
+{ name: “Note”, years: “2005-2020” },
+{ name: “Sentra”, years: “2007-2024” },
+{ name: “Altima”, years: “2007-2024” },
+{ name: “Rogue”, years: “2008-2024” },
+{ name: “Murano”, years: “2005-2020” },
+{ name: “Kicks”, years: “2018-2024” },
+]
+},
+{
+id: 5, name: “Kia”,
+models: [
+{ name: “Sportage”, years: “2005-2024” },
+{ name: “Rio”, years: “2006-2024” },
+{ name: “Optima/K5”, years: “2008-2024” },
+{ name: “Sorento”, years: “2006-2024” },
+{ name: “Forte/Cerato”, years: “2009-2024” },
+{ name: “Picanto”, years: “2008-2024” },
+{ name: “Seltos”, years: “2020-2024” },
+{ name: “Soul”, years: “2010-2024” },
+]
+},
+{
+id: 6, name: “Mercedes-Benz”,
+models: [
+{ name: “C-Class (W203/W204/W205)”, years: “2001-2024” },
+{ name: “E-Class (W211/W212/W213)”, years: “2003-2024” },
+{ name: “GLC”, years: “2016-2024” },
+{ name: “GLE/ML”, years: “2006-2024” },
+{ name: “GLK”, years: “2009-2015” },
+{ name: “S-Class”, years: “2006-2024” },
+{ name: “GLA”, years: “2015-2024” },
+{ name: “Sprinter”, years: “2006-2024” },
+]
+},
+{
+id: 7, name: “BMW”,
+models: [
+{ name: “3 Series (E90/F30/G20)”, years: “2005-2024” },
+{ name: “5 Series (E60/F10/G30)”, years: “2004-2024” },
+{ name: “X3”, years: “2006-2024” },
+{ name: “X5”, years: “2007-2024” },
+{ name: “X1”, years: “2010-2024” },
+{ name: “7 Series”, years: “2005-2024” },
+]
+},
+{
+id: 8, name: “Volkswagen”,
+models: [
+{ name: “Golf”, years: “2004-2024” },
+{ name: “Passat”, years: “2005-2024” },
+{ name: “Tiguan”, years: “2008-2024” },
+{ name: “Polo”, years: “2006-2024” },
+{ name: “Jetta”, years: “2006-2024” },
+{ name: “Touareg”, years: “2004-2020” },
+]
+},
+{
+id: 9, name: “Ford”,
+models: [
+{ name: “Ranger”, years: “2006-2024” },
+{ name: “Focus”, years: “2005-2020” },
+{ name: “Escape/Kuga”, years: “2008-2024” },
+{ name: “F-150”, years: “2009-2024” },
+{ name: “Explorer”, years: “2006-2024” },
+{ name: “EcoSport”, years: “2014-2024” },
+{ name: “Edge”, years: “2007-2024” },
+{ name: “Fusion”, years: “2006-2020” },
+]
+},
+{
+id: 10, name: “Chevrolet”,
+models: [
+{ name: “Equinox”, years: “2010-2024” },
+{ name: “Cruze”, years: “2011-2019” },
+{ name: “Malibu”, years: “2008-2024” },
+{ name: “Silverado”, years: “2007-2024” },
+{ name: “Traverse”, years: “2009-2024” },
+{ name: “Spark”, years: “2010-2024” },
+{ name: “Trax”, years: “2015-2024” },
+]
+},
+{
+id: 11, name: “Mazda”,
+models: [
+{ name: “Mazda3/Axela”, years: “2004-2024” },
+{ name: “Mazda6/Atenza”, years: “2003-2024” },
+{ name: “CX-5”, years: “2013-2024” },
+{ name: “CX-3”, years: “2016-2024” },
+{ name: “Demio/Mazda2”, years: “2003-2024” },
+]
+},
+{
+id: 12, name: “Mitsubishi”,
+models: [
+{ name: “L200/Triton”, years: “2005-2024” },
+{ name: “Outlander”, years: “2007-2024” },
+{ name: “Pajero/Montero”, years: “2000-2021” },
+{ name: “ASX/RVR”, years: “2010-2024” },
+{ name: “Lancer”, years: “2004-2018” },
+{ name: “Canter”, years: “2005-2024” },
+]
+},
+{
+id: 13, name: “Suzuki”,
+models: [
+{ name: “Swift”, years: “2005-2024” },
+{ name: “Vitara”, years: “2006-2024” },
+{ name: “Jimny”, years: “2005-2024” },
+{ name: “Alto”, years: “2006-2024” },
+{ name: “SX4/S-Cross”, years: “2007-2024” },
+]
+},
+{
+id: 14, name: “Peugeot”,
+models: [
+{ name: “208”, years: “2012-2024” },
+{ name: “308”, years: “2008-2024” },
+{ name: “3008”, years: “2010-2024” },
+{ name: “5008”, years: “2010-2024” },
+{ name: “Partner”, years: “2008-2024” },
+]
+},
+{
+id: 15, name: “Renault”,
+models: [
+{ name: “Duster”, years: “2012-2024” },
+{ name: “Clio”, years: “2005-2024” },
+{ name: “Kwid”, years: “2016-2024” },
+{ name: “Sandero”, years: “2008-2024” },
+]
+},
+{
+id: 16, name: “Isuzu”,
+models: [
+{ name: “D-Max”, years: “2007-2024” },
+{ name: “MU-X”, years: “2014-2024” },
+{ name: “NQR/NKR (Truck)”, years: “2005-2024” },
+]
+},
+{
+id: 17, name: “Land Rover”,
+models: [
+{ name: “Range Rover”, years: “2005-2024” },
+{ name: “Range Rover Sport”, years: “2005-2024” },
+{ name: “Range Rover Evoque”, years: “2012-2024” },
+{ name: “Discovery”, years: “2004-2024” },
+{ name: “Defender”, years: “2020-2024” },
+]
+},
+{
+id: 18, name: “Lexus”,
+models: [
+{ name: “RX 350”, years: “2007-2024” },
+{ name: “ES 350”, years: “2007-2024” },
+{ name: “IS 250/300”, years: “2006-2024” },
+{ name: “GX 460”, years: “2010-2024” },
+{ name: “NX”, years: “2015-2024” },
+{ name: “LX 570”, years: “2008-2024” },
+]
+},
+{
+id: 19, name: “Audi”,
+models: [
+{ name: “A3”, years: “2005-2024” },
+{ name: “A4”, years: “2005-2024” },
+{ name: “Q5”, years: “2009-2024” },
+{ name: “Q7”, years: “2007-2024” },
+{ name: “A6”, years: “2005-2024” },
+]
+},
+{
+id: 20, name: “Subaru”,
+models: [
+{ name: “Forester”, years: “2003-2024” },
+{ name: “Outback”, years: “2005-2024” },
+{ name: “Impreza”, years: “2004-2024” },
+{ name: “XV/Crosstrek”, years: “2012-2024” },
+]
+},
+{
+id: 21, name: “Acura”,
+models: [
+{ name: “MDX”, years: “2007-2024” },
+{ name: “TLX/TL”, years: “2004-2024” },
+{ name: “RDX”, years: “2007-2024” },
+{ name: “TSX”, years: “2004-2014” },
+]
+},
+{
+id: 22, name: “DAF”,
+models: [
+{ name: “CF”, years: “2005-2024” },
+{ name: “XF”, years: “2005-2024” },
+{ name: “LF”, years: “2005-2024” },
+]
+},
+{
+id: 23, name: “MAN”,
+models: [
+{ name: “TGA”, years: “2005-2024” },
+{ name: “TGX”, years: “2007-2024” },
+{ name: “TGS”, years: “2008-2024” },
+]
+},
+{
+id: 24, name: “Scania”,
+models: [
+{ name: “R Series”, years: “2005-2024” },
+{ name: “P Series”, years: “2005-2024” },
+{ name: “G Series”, years: “2008-2024” },
+]
+},
+];
+
+// ============================================================
+// PART 3: DEMO VENDOR SHOPS - Tonaton Parts Shop & Jiji Parts Shop
+// ============================================================
+
+const demoVendors = [
+{
+shop_name: “Tonaton Auto Parts”,
+location: “Abossey Okai, Accra”,
+whatsapp: “+233200000001”,
+description: “Wide selection of new and used auto parts for all major vehicle makes. Verified listings from Tonaton’s top-rated sellers.”,
+source: “tonaton”
+},
+{
+shop_name: “Jiji Spare Parts Hub”,
+location: “Abossey Okai, Accra”,
+whatsapp: “+233200000002”,
+description: “Quality spare parts at competitive prices. Sourced from Jiji Ghana’s most trusted auto parts dealers.”,
+source: “jiji”
+},
+];
+
+// ============================================================
+// PART 4: REALISTIC SEED LISTINGS
+// Prices from actual Ghana market data (Jiji, Tonaton, news reports)
+// All prices in pesewas (GH¢ × 100)
+// ============================================================
+
+const seedListings = [
+// === TOYOTA COROLLA PARTS (most popular car in Ghana) ===
+{ title: “Front Brake Pads - Toyota Corolla 2009-2019”, category: 2, subcategory: “Brake Pads (Front)”, make: 1, model: “Corolla”, yearFrom: 2009, yearTo: 2019, price: 15000, condition: “new”, vendor: “tonaton” },
+{ title: “Rear Brake Pads - Toyota Corolla 2014-2019”, category: 2, subcategory: “Brake Pads (Rear)”, make: 1, model: “Corolla”, yearFrom: 2014, yearTo: 2019, price: 12000, condition: “new”, vendor: “tonaton” },
+{ title: “Front Shock Absorber (Pair) - Toyota Corolla 2008-2013”, category: 2, subcategory: “Shock Absorber (Front)”, make: 1, model: “Corolla”, yearFrom: 2008, yearTo: 2013, price: 45000, condition: “new”, vendor: “tonaton” },
+{ title: “Radiator - Toyota Corolla 2009-2013”, category: 5, subcategory: “Radiator”, make: 1, model: “Corolla”, yearFrom: 2009, yearTo: 2013, price: 65000, condition: “new”, vendor: “jiji” },
+{ title: “AC Condenser - Toyota Corolla 2014-2019”, category: 5, subcategory: “AC Condenser”, make: 1, model: “Corolla”, yearFrom: 2014, yearTo: 2019, price: 55000, condition: “new”, vendor: “jiji” },
+{ title: “Headlight Assembly (Left) - Toyota Corolla 2014-2017”, category: 4, subcategory: “Headlight Assembly (Left)”, make: 1, model: “Corolla”, yearFrom: 2014, yearTo: 2017, price: 85000, condition: “new”, vendor: “tonaton” },
+{ title: “Headlight Assembly (Right) - Toyota Corolla 2014-2017”, category: 4, subcategory: “Headlight Assembly (Right)”, make: 1, model: “Corolla”, yearFrom: 2014, yearTo: 2017, price: 85000, condition: “new”, vendor: “tonaton” },
+{ title: “Tail Light Assembly (Left) - Toyota Corolla 2014-2017”, category: 4, subcategory: “Tail Light Assembly (Left)”, make: 1, model: “Corolla”, yearFrom: 2014, yearTo: 2017, price: 35000, condition: “new”, vendor: “jiji” },
+{ title: “Lower Control Arm - Toyota Corolla 2009-2019”, category: 2, subcategory: “Control Arm (Lower)”, make: 1, model: “Corolla”, yearFrom: 2009, yearTo: 2019, price: 25000, condition: “new”, vendor: “tonaton” },
+{ title: “Tie Rod End (Pair) - Toyota Corolla 2009-2019”, category: 2, subcategory: “Tie Rod End”, make: 1, model: “Corolla”, yearFrom: 2009, yearTo: 2019, price: 18000, condition: “new”, vendor: “jiji” },
+{ title: “Stabilizer Link - Toyota Corolla 2009-2019”, category: 2, subcategory: “Stabilizer/Sway Bar Link”, make: 1, model: “Corolla”, yearFrom: 2009, yearTo: 2019, price: 8000, condition: “new”, vendor: “tonaton” },
+{ title: “Oil Filter - Toyota Corolla (All Years)”, category: 6, subcategory: “Oil Filter”, make: 1, model: “Corolla”, yearFrom: 2003, yearTo: 2024, price: 3500, condition: “new”, vendor: “jiji” },
+{ title: “Air Filter - Toyota Corolla 2009-2019”, category: 6, subcategory: “Air Filter”, make: 1, model: “Corolla”, yearFrom: 2009, yearTo: 2019, price: 4500, condition: “new”, vendor: “tonaton” },
+{ title: “Spark Plug Set (4pcs) - Toyota Corolla 2009-2019”, category: 1, subcategory: “Spark Plug”, make: 1, model: “Corolla”, yearFrom: 2009, yearTo: 2019, price: 12000, condition: “new”, vendor: “jiji” },
+{ title: “Engine Mount Set - Toyota Corolla 2009-2013”, category: 1, subcategory: “Engine Mount”, make: 1, model: “Corolla”, yearFrom: 2009, yearTo: 2013, price: 35000, condition: “new”, vendor: “tonaton” },
+
+// === TOYOTA CAMRY PARTS ===
+{ title: “Front Brake Pads - Toyota Camry 2012-2018”, category: 2, subcategory: “Brake Pads (Front)”, make: 1, model: “Camry”, yearFrom: 2012, yearTo: 2018, price: 18000, condition: “new”, vendor: “tonaton” },
+{ title: “Front Shock Absorber (Pair) - Toyota Camry 2012-2017”, category: 2, subcategory: “Shock Absorber (Front)”, make: 1, model: “Camry”, yearFrom: 2012, yearTo: 2017, price: 55000, condition: “new”, vendor: “jiji” },
+{ title: “Radiator - Toyota Camry 2012-2017”, category: 5, subcategory: “Radiator”, make: 1, model: “Camry”, yearFrom: 2012, yearTo: 2017, price: 75000, condition: “new”, vendor: “tonaton” },
+{ title: “Headlight Assembly (Left) - Toyota Camry 2012-2014”, category: 4, subcategory: “Headlight Assembly (Left)”, make: 1, model: “Camry”, yearFrom: 2012, yearTo: 2014, price: 95000, condition: “new”, vendor: “jiji” },
+{ title: “AC Compressor - Toyota Camry 2012-2017”, category: 5, subcategory: “AC Compressor”, make: 1, model: “Camry”, yearFrom: 2012, yearTo: 2017, price: 120000, condition: “new”, vendor: “tonaton” },
+{ title: “Alternator - Toyota Camry 2012-2017”, category: 8, subcategory: “Alternator”, make: 1, model: “Camry”, yearFrom: 2012, yearTo: 2017, price: 80000, condition: “used”, vendor: “jiji” },
+
+// === TOYOTA RAV4 PARTS ===
+{ title: “Front Brake Pads - Toyota RAV4 2013-2018”, category: 2, subcategory: “Brake Pads (Front)”, make: 1, model: “RAV4”, yearFrom: 2013, yearTo: 2018, price: 20000, condition: “new”, vendor: “tonaton” },
+{ title: “Rear Shock Absorber (Pair) - Toyota RAV4 2013-2018”, category: 2, subcategory: “Shock Absorber (Rear)”, make: 1, model: “RAV4”, yearFrom: 2013, yearTo: 2018, price: 60000, condition: “new”, vendor: “jiji” },
+{ title: “Radiator - Toyota RAV4 2013-2018”, category: 5, subcategory: “Radiator”, make: 1, model: “RAV4”, yearFrom: 2013, yearTo: 2018, price: 80000, condition: “new”, vendor: “tonaton” },
+{ title: “Side Mirror (Left) - Toyota RAV4 2013-2018”, category: 3, subcategory: “Side Mirror”, make: 1, model: “RAV4”, yearFrom: 2013, yearTo: 2018, price: 45000, condition: “new”, vendor: “jiji” },
+
+// === TOYOTA HILUX PARTS ===
+{ title: “Front Shock Absorber (Pair) - Toyota Hilux 2015-2024”, category: 2, subcategory: “Shock Absorber (Front)”, make: 1, model: “Hilux”, yearFrom: 2015, yearTo: 2024, price: 70000, condition: “new”, vendor: “tonaton” },
+{ title: “Brake Disc/Rotor (Front) - Toyota Hilux 2015-2024”, category: 2, subcategory: “Brake Disc/Rotor”, make: 1, model: “Hilux”, yearFrom: 2015, yearTo: 2024, price: 35000, condition: “new”, vendor: “jiji” },
+{ title: “Leaf Spring (Rear) - Toyota Hilux 2015-2024”, category: 2, subcategory: “Leaf Spring”, make: 1, model: “Hilux”, yearFrom: 2015, yearTo: 2024, price: 90000, condition: “new”, vendor: “tonaton” },
+
+// === HONDA CIVIC PARTS ===
+{ title: “Front Brake Pads - Honda Civic 2012-2016”, category: 2, subcategory: “Brake Pads (Front)”, make: 2, model: “Civic”, yearFrom: 2012, yearTo: 2016, price: 14000, condition: “new”, vendor: “jiji” },
+{ title: “Front Shock Absorber (Pair) - Honda Civic 2012-2016”, category: 2, subcategory: “Shock Absorber (Front)”, make: 2, model: “Civic”, yearFrom: 2012, yearTo: 2016, price: 40000, condition: “new”, vendor: “tonaton” },
+{ title: “Radiator - Honda Civic 2012-2016”, category: 5, subcategory: “Radiator”, make: 2, model: “Civic”, yearFrom: 2012, yearTo: 2016, price: 60000, condition: “new”, vendor: “jiji” },
+{ title: “Headlight Assembly (Left) - Honda Civic 2012-2015”, category: 4, subcategory: “Headlight Assembly (Left)”, make: 2, model: “Civic”, yearFrom: 2012, yearTo: 2015, price: 75000, condition: “new”, vendor: “tonaton” },
+{ title: “CV Axle (Left) - Honda Civic 2012-2016”, category: 2, subcategory: “CV Axle/Driveshaft”, make: 2, model: “Civic”, yearFrom: 2012, yearTo: 2016, price: 35000, condition: “new”, vendor: “jiji” },
+
+// === HONDA CR-V PARTS ===
+{ title: “Front Brake Pads - Honda CR-V 2012-2017”, category: 2, subcategory: “Brake Pads (Front)”, make: 2, model: “CR-V”, yearFrom: 2012, yearTo: 2017, price: 16000, condition: “new”, vendor: “tonaton” },
+{ title: “Radiator - Honda CR-V 2012-2017”, category: 5, subcategory: “Radiator”, make: 2, model: “CR-V”, yearFrom: 2012, yearTo: 2017, price: 70000, condition: “new”, vendor: “jiji” },
+{ title: “Rear Shock Absorber (Pair) - Honda CR-V 2012-2017”, category: 2, subcategory: “Shock Absorber (Rear)”, make: 2, model: “CR-V”, yearFrom: 2012, yearTo: 2017, price: 50000, condition: “new”, vendor: “tonaton” },
+
+// === HYUNDAI TUCSON PARTS ===
+{ title: “Front Brake Pads - Hyundai Tucson 2016-2021”, category: 2, subcategory: “Brake Pads (Front)”, make: 3, model: “Tucson”, yearFrom: 2016, yearTo: 2021, price: 16000, condition: “new”, vendor: “jiji” },
+{ title: “Front Shock Absorber (Pair) - Hyundai Tucson 2016-2021”, category: 2, subcategory: “Shock Absorber (Front)”, make: 3, model: “Tucson”, yearFrom: 2016, yearTo: 2021, price: 55000, condition: “new”, vendor: “tonaton” },
+{ title: “Headlight Assembly (Left) - Hyundai Tucson 2016-2018”, category: 4, subcategory: “Headlight Assembly (Left)”, make: 3, model: “Tucson”, yearFrom: 2016, yearTo: 2018, price: 90000, condition: “new”, vendor: “jiji” },
+{ title: “AC Condenser - Hyundai Tucson 2016-2021”, category: 5, subcategory: “AC Condenser”, make: 3, model: “Tucson”, yearFrom: 2016, yearTo: 2021, price: 60000, condition: “new”, vendor: “tonaton” },
+{ title: “Ball Joint (Lower) - Hyundai Tucson 2016-2021”, category: 2, subcategory: “Ball Joint”, make: 3, model: “Tucson”, yearFrom: 2016, yearTo: 2021, price: 12000, condition: “new”, vendor: “jiji” },
+
+// === HYUNDAI ELANTRA PARTS ===
+{ title: “Front Brake Pads - Hyundai Elantra 2011-2016”, category: 2, subcategory: “Brake Pads (Front)”, make: 3, model: “Elantra”, yearFrom: 2011, yearTo: 2016, price: 12000, condition: “new”, vendor: “tonaton” },
+{ title: “Tie Rod End (Pair) - Hyundai Elantra 2011-2016”, category: 2, subcategory: “Tie Rod End”, make: 3, model: “Elantra”, yearFrom: 2011, yearTo: 2016, price: 15000, condition: “new”, vendor: “jiji” },
+{ title: “Ball Joint - Hyundai Elantra 2008-2016”, category: 2, subcategory: “Ball Joint”, make: 3, model: “Elantra”, yearFrom: 2008, yearTo: 2016, price: 10000, condition: “new”, vendor: “tonaton” },
+
+// === NISSAN PARTS ===
+{ title: “Front Brake Pads - Nissan X-Trail 2014-2020”, category: 2, subcategory: “Brake Pads (Front)”, make: 4, model: “X-Trail”, yearFrom: 2014, yearTo: 2020, price: 18000, condition: “new”, vendor: “jiji” },
+{ title: “Radiator - Nissan Almera 2006-2013”, category: 5, subcategory: “Radiator”, make: 4, model: “Almera”, yearFrom: 2006, yearTo: 2013, price: 55000, condition: “new”, vendor: “tonaton” },
+{ title: “Front Shock Absorber (Pair) - Nissan Pathfinder 2013-2020”, category: 2, subcategory: “Shock Absorber (Front)”, make: 4, model: “Pathfinder”, yearFrom: 2013, yearTo: 2020, price: 65000, condition: “new”, vendor: “jiji” },
+
+// === MERCEDES-BENZ PARTS ===
+{ title: “Front Brake Pads - Mercedes C-Class W204 2008-2014”, category: 2, subcategory: “Brake Pads (Front)”, make: 6, model: “C-Class (W203/W204/W205)”, yearFrom: 2008, yearTo: 2014, price: 25000, condition: “new”, vendor: “tonaton” },
+{ title: “Headlight Assembly (Left) - Mercedes C-Class W204”, category: 4, subcategory: “Headlight Assembly (Left)”, make: 6, model: “C-Class (W203/W204/W205)”, yearFrom: 2008, yearTo: 2014, price: 150000, condition: “new”, vendor: “jiji” },
+{ title: “Radiator - Mercedes E-Class W212 2010-2016”, category: 5, subcategory: “Radiator”, make: 6, model: “E-Class (W211/W212/W213)”, yearFrom: 2010, yearTo: 2016, price: 120000, condition: “new”, vendor: “tonaton” },
+{ title: “Sprinter Control Arm - Mercedes Sprinter 2006-2018”, category: 2, subcategory: “Control Arm (Lower)”, make: 6, model: “Sprinter”, yearFrom: 2006, yearTo: 2018, price: 45000, condition: “new”, vendor: “jiji” },
+
+// === KIA PARTS ===
+{ title: “Front Brake Pads - Kia Sportage 2016-2021”, category: 2, subcategory: “Brake Pads (Front)”, make: 5, model: “Sportage”, yearFrom: 2016, yearTo: 2021, price: 15000, condition: “new”, vendor: “tonaton” },
+{ title: “Radiator - Kia Rio 2012-2017”, category: 5, subcategory: “Radiator”, make: 5, model: “Rio”, yearFrom: 2012, yearTo: 2017, price: 50000, condition: “new”, vendor: “jiji” },
+
+// === FORD PARTS ===
+{ title: “Front Brake Pads - Ford Ranger 2012-2020”, category: 2, subcategory: “Brake Pads (Front)”, make: 9, model: “Ranger”, yearFrom: 2012, yearTo: 2020, price: 20000, condition: “new”, vendor: “tonaton” },
+{ title: “Front Shock Absorber (Pair) - Ford Escape 2013-2019”, category: 2, subcategory: “Shock Absorber (Front)”, make: 9, model: “Escape/Kuga”, yearFrom: 2013, yearTo: 2019, price: 50000, condition: “new”, vendor: “jiji” },
+
+// === BMW PARTS ===
+{ title: “Front Brake Pads - BMW 3 Series F30 2012-2018”, category: 2, subcategory: “Brake Pads (Front)”, make: 7, model: “3 Series (E90/F30/G20)”, yearFrom: 2012, yearTo: 2018, price: 30000, condition: “new”, vendor: “tonaton” },
+{ title: “Radiator - BMW X5 E70 2007-2013”, category: 5, subcategory: “Radiator”, make: 7, model: “X5”, yearFrom: 2007, yearTo: 2013, price: 140000, condition: “new”, vendor: “jiji” },
+
+// === LEXUS PARTS ===
+{ title: “Front Brake Pads - Lexus RX 350 2010-2015”, category: 2, subcategory: “Brake Pads (Front)”, make: 18, model: “RX 350”, yearFrom: 2010, yearTo: 2015, price: 22000, condition: “new”, vendor: “tonaton” },
+{ title: “Grille (Front) - Lexus RX 350 2013-2015”, category: 3, subcategory: “Grille”, make: 18, model: “RX 350”, yearFrom: 2013, yearTo: 2015, price: 65000, condition: “new”, vendor: “jiji” },
+{ title: “Down Grille - Lexus RX 350 2023-2025”, category: 3, subcategory: “Grille”, make: 18, model: “RX 350”, yearFrom: 2023, yearTo: 2025, price: 25000, condition: “used”, vendor: “jiji” },
+
+// === UNIVERSAL / MULTI-FIT PARTS ===
+{ title: “Car Battery 75AH - Universal Fit”, category: 8, subcategory: “Car Battery”, make: null, model: null, yearFrom: null, yearTo: null, price: 85000, condition: “new”, vendor: “tonaton” },
+{ title: “Car Battery 60AH - Universal Fit”, category: 8, subcategory: “Car Battery”, make: null, model: null, yearFrom: null, yearTo: null, price: 65000, condition: “new”, vendor: “jiji” },
+{ title: “Engine Oil 5W-30 Full Synthetic (4L)”, category: 6, subcategory: “Engine Oil (5W-30)”, make: null, model: null, yearFrom: null, yearTo: null, price: 18000, condition: “new”, vendor: “tonaton” },
+{ title: “Engine Oil 10W-40 Semi-Synthetic (4L)”, category: 6, subcategory: “Engine Oil (10W-40)”, make: null, model: null, yearFrom: null, yearTo: null, price: 12000, condition: “new”, vendor: “jiji” },
+{ title: “Brake Fluid DOT 4 (500ml)”, category: 6, subcategory: “Brake Fluid”, make: null, model: null, yearFrom: null, yearTo: null, price: 3500, condition: “new”, vendor: “tonaton” },
+{ title: “Coolant/Antifreeze (1L)”, category: 6, subcategory: “Coolant/Antifreeze”, make: null, model: null, yearFrom: null, yearTo: null, price: 4000, condition: “new”, vendor: “jiji” },
+{ title: “Leather Seat Cover Set (Universal)”, category: 10, subcategory: “Seat Cover”, make: null, model: null, yearFrom: null, yearTo: null, price: 45000, condition: “new”, vendor: “tonaton” },
+{ title: “Floor Mat Set (Universal, Rubber)”, category: 10, subcategory: “Floor Mat”, make: null, model: null, yearFrom: null, yearTo: null, price: 15000, condition: “new”, vendor: “jiji” },
+{ title: “Dash Cam 1080P (Front)”, category: 12, subcategory: “Dash Cam (Front)”, make: null, model: null, yearFrom: null, yearTo: null, price: 25000, condition: “new”, vendor: “tonaton” },
+{ title: “GPS Tracker (Real-time, SIM-based)”, category: 12, subcategory: “GPS Tracker”, make: null, model: null, yearFrom: null, yearTo: null, price: 20000, condition: “new”, vendor: “jiji” },
+{ title: “Car Alarm System with Remote”, category: 12, subcategory: “Car Alarm System”, make: null, model: null, yearFrom: null, yearTo: null, price: 35000, condition: “new”, vendor: “tonaton” },
+{ title: “Android Car Stereo 9" (Universal, GPS + CarPlay)”, category: 11, subcategory: “Android Auto/CarPlay Unit”, make: null, model: null, yearFrom: null, yearTo: null, price: 80000, condition: “new”, vendor: “jiji” },
+];
+
+// ============================================================
+// PART 5: GENERATE SQL OUTPUT
+// ============================================================
+
+function generateSQL() {
+let sql = [];
+
+sql.push(”– VOOM Ghana Taxonomy & Seed Data”);
+sql.push(”– Generated: “ + new Date().toISOString());
+sql.push(”– Run against your PostgreSQL database”);
+sql.push(””);
+sql.push(“BEGIN;”);
+sql.push(””);
+
+// Categories
+sql.push(”– ============ CATEGORIES ============”);
+for (const cat of categories) {
+sql.push(`INSERT INTO categories (id, name, slug) VALUES (${cat.id}, '${cat.name}', '${cat.slug}') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, slug = EXCLUDED.slug;`);
+}
+sql.push(””);
+
+// Subcategories (if table exists — add to schema if needed)
+sql.push(”– ============ SUBCATEGORIES ============”);
+sql.push(”– Create subcategories table if not exists:”);
+sql.push(“CREATE TABLE IF NOT EXISTS subcategories (”);
+sql.push(”  id SERIAL PRIMARY KEY,”);
+sql.push(”  category_id INTEGER REFERENCES categories(id),”);
+sql.push(”  name TEXT NOT NULL,”);
+sql.push(”  slug TEXT NOT NULL,”);
+sql.push(”  UNIQUE(category_id, slug)”);
+sql.push(”);”);
+sql.push(””);
+
+let subId = 1;
+for (const cat of categories) {
+for (const sub of cat.subcategories) {
+const slug = sub.toLowerCase().replace(/[^a-z0-9]+/g, ‘-’).replace(/(^-|-$)/g, ‘’);
+sql.push(`INSERT INTO subcategories (id, category_id, name, slug) VALUES (${subId}, ${cat.id}, '${sub.replace(/'/g, "''")}', '${slug}') ON CONFLICT (category_id, slug) DO NOTHING;`);
+subId++;
+}
+}
+sql.push(””);
+
+// Vehicle Makes
+sql.push(”– ============ VEHICLE MAKES ============”);
+for (const make of vehicleMakes) {
+sql.push(`INSERT INTO vehicle_makes (id, name) VALUES (${make.id}, '${make.name}') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;`);
+}
+sql.push(””);
+
+// Vehicle Models
+sql.push(”– ============ VEHICLE MODELS ============”);
+let modelId = 1;
+for (const make of vehicleMakes) {
+for (const model of make.models) {
+sql.push(`INSERT INTO vehicle_models (id, make_id, name) VALUES (${modelId}, ${make.id}, '${model.name.replace(/'/g, "''")}') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;`);
+modelId++;
+}
+}
+sql.push(””);
+
+// Demo users & vendors
+sql.push(”– ============ DEMO VENDOR ACCOUNTS ============”);
+for (let i = 0; i < demoVendors.length; i++) {
+const v = demoVendors[i];
+const userId = `'00000000-0000-0000-0000-00000000000${i + 1}'`;
+const vendorId = `'00000000-0000-0000-0001-00000000000${i + 1}'`;
+sql.push(`INSERT INTO users (id, phone, name, role, is_verified, created_at, updated_at) VALUES (${userId}, '${v.whatsapp}', '${v.shop_name}', 'vendor', true, NOW(), NOW()) ON CONFLICT (id) DO NOTHING;`);
+sql.push(`INSERT INTO vendors (id, user_id, shop_name, location, whatsapp_number, description, is_approved, created_at) VALUES (${vendorId}, ${userId}, '${v.shop_name}', '${v.location}', '${v.whatsapp}', '${v.description.replace(/'/g, "''")}', true, NOW()) ON CONFLICT (id) DO NOTHING;`);
+}
+sql.push(””);
+
+// Listings
+sql.push(”– ============ SEED LISTINGS ============”);
+for (let i = 0; i < seedListings.length; i++) {
+const p = seedListings[i];
+const vendorId = p.vendor === “tonaton”
+? “‘00000000-0000-0000-0001-000000000001’”
+: “‘00000000-0000-0000-0001-000000000002’”;
+const partId = `'10000000-0000-0000-0000-${String(i + 1).padStart(12, '0')}'`;
+
+```
+// Find make_id
+const makeId = p.make ? p.make : "NULL";
+
+// Find model_id by counting through models
+let modelId = "NULL";
+if (p.model) {
+  let counter = 0;
+  for (const make of vehicleMakes) {
+    for (const model of make.models) {
+      counter++;
+      if (make.id === p.make && model.name === p.model) {
+        modelId = counter;
+        break;
+      }
+    }
+    if (modelId !== "NULL") break;
+  }
+}
+
+const yearFrom = p.yearFrom || "NULL";
+const yearTo = p.yearTo || "NULL";
+
+sql.push(`INSERT INTO parts (id, vendor_id, title, description, price, category_id, condition, make_id, model_id, year_from, year_to, images, is_available, created_at, updated_at) VALUES (${partId}, ${vendorId}, '${p.title.replace(/'/g, "''")}', '${p.subcategory} - Quality part sourced from verified Ghana dealers. Compatible with listed vehicle years.', ${p.price}, ${p.category}, '${p.condition}', ${makeId}, ${modelId}, ${yearFrom}, ${yearTo}, '{}', true, NOW(), NOW()) ON CONFLICT (id) DO NOTHING;`);
+```
+
+}
+sql.push(””);
+
+sql.push(“COMMIT;”);
+sql.push(””);
+sql.push(”– ============ SUMMARY ============”);
+sql.push(`-- Categories: ${categories.length}`);
+sql.push(`-- Subcategories: ${categories.reduce((a, c) => a + c.subcategories.length, 0)}`);
+sql.push(`-- Vehicle Makes: ${vehicleMakes.length}`);
+sql.push(`-- Vehicle Models: ${vehicleMakes.reduce((a, m) => a + m.models.length, 0)}`);
+sql.push(`-- Demo Vendors: ${demoVendors.length}`);
+sql.push(`-- Seed Listings: ${seedListings.length}`);
+
+return sql.join(”\n”);
+}
+
+// ============================================================
+// PART 6: GENERATE JSON EXPORT (for Drizzle seed scripts)
+// ============================================================
+
+function generateJSON() {
+return JSON.stringify({
+categories,
+vehicleMakes,
+demoVendors,
+seedListings,
+summary: {
+categories: categories.length,
+subcategories: categories.reduce((a, c) => a + c.subcategories.length, 0),
+vehicleMakes: vehicleMakes.length,
+vehicleModels: vehicleMakes.reduce((a, m) => a + m.models.length, 0),
+demoVendors: demoVendors.length,
+seedListings: seedListings.length,
+}
+}, null, 2);
+}
+
+// Output SQL by default, JSON if –json flag
+if (process.argv.includes(”–json”)) {
+console.log(generateJSON());
+} else {
+console.log(generateSQL());
+}
