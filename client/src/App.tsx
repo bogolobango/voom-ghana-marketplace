@@ -4,7 +4,6 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { VehicleProvider } from "./contexts/VehicleContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -20,14 +19,11 @@ import Orders from "./pages/Orders";
 import Notifications from "./pages/Notifications";
 import Categories from "./pages/Categories";
 import AdminDashboard from "./pages/AdminDashboard";
-import OrderDetail from "./pages/OrderDetail";
-import Profile from "./pages/Profile";
-import Login from "./pages/Login";
+import SignIn from "./pages/SignIn";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/login" component={Login} />
       <Route path="/" component={Home} />
       <Route path="/products" component={Products} />
       <Route path="/products/:id" component={ProductDetail} />
@@ -38,11 +34,10 @@ function Router() {
       <Route path="/vendor/register" component={VendorRegister} />
       <Route path="/vendor/dashboard" component={VendorDashboard} />
       <Route path="/orders" component={Orders} />
-      <Route path="/orders/:id" component={OrderDetail} />
-      <Route path="/profile" component={Profile} />
       <Route path="/notifications" component={Notifications} />
       <Route path="/categories" component={Categories} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/sign-in" component={SignIn} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -53,18 +48,16 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
-        <VehicleProvider>
-          <TooltipProvider>
-            <Toaster />
-            <div className="min-h-screen flex flex-col zen-bg">
-              <Navbar />
-              <main className="flex-1">
-                <Router />
-              </main>
-              <Footer />
-            </div>
-          </TooltipProvider>
-        </VehicleProvider>
+        <TooltipProvider>
+          <Toaster />
+          <div className="min-h-screen flex flex-col zen-bg">
+            <Navbar />
+            <main className="flex-1">
+              <Router />
+            </main>
+            <Footer />
+          </div>
+        </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

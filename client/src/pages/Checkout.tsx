@@ -8,63 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { formatGHS, generateWhatsAppLink, GHANA_REGIONS, GHANA_CITIES, PAYMENT_METHODS } from "@shared/marketplace";
-import { MessageCircle, Loader2, CheckCircle2, Package, Banknote, Building2, Smartphone, ArrowLeft, ArrowRight, User, MapPin, CreditCard } from "lucide-react";
+import { formatGHS, generateWhatsAppLink, GHANA_REGIONS, GHANA_CITIES } from "@shared/marketplace";
+import { MessageCircle, Loader2, CheckCircle2, Package } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-
-const STEPS = [
-  { id: 1, label: "Contact", icon: User },
-  { id: 2, label: "Shipping", icon: MapPin },
-  { id: 3, label: "Payment", icon: CreditCard },
-] as const;
-
-function StepIndicator({ currentStep }: { currentStep: number }) {
-  return (
-    <div className="flex items-center justify-center gap-0 mb-10">
-      {STEPS.map((step, i) => {
-        const Icon = step.icon;
-        const isActive = currentStep === step.id;
-        const isCompleted = currentStep > step.id;
-        return (
-          <div key={step.id} className="flex items-center">
-            <div className="flex flex-col items-center gap-1.5">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                  isCompleted
-                    ? "bg-primary text-white"
-                    : isActive
-                    ? "bg-primary/15 text-primary ring-2 ring-primary/30"
-                    : "bg-muted/40 text-muted-foreground/40"
-                }`}
-              >
-                {isCompleted ? (
-                  <CheckCircle2 className="h-5 w-5" />
-                ) : (
-                  <Icon className="h-4.5 w-4.5" />
-                )}
-              </div>
-              <span
-                className={`text-[11px] font-medium tracking-wide ${
-                  isActive ? "text-primary" : isCompleted ? "text-foreground/70" : "text-muted-foreground/40"
-                }`}
-              >
-                {step.label}
-              </span>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div
-                className={`w-16 sm:w-24 h-0.5 mx-3 mb-5 rounded-full transition-all duration-300 ${
-                  currentStep > step.id ? "bg-primary" : "bg-muted/30"
-                }`}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function Checkout() {
   const { user } = useAuth();
@@ -73,14 +20,12 @@ export default function Checkout() {
   const createOrder = trpc.order.create.useMutation();
   const utils = trpc.useUtils();
 
-  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     buyerName: user?.name || "",
     buyerPhone: "",
     shippingAddress: "",
     shippingCity: "",
     shippingRegion: "",
-    paymentMethod: "pay_on_delivery" as "pay_on_delivery" | "bank_transfer" | "mobile_money",
     notes: "",
   });
   const [orderCreated, setOrderCreated] = useState<{ orderNumber: string; whatsappLink: string } | null>(null);
@@ -102,44 +47,14 @@ export default function Checkout() {
     }
   });
 
-  const paymentIcons = {
-    pay_on_delivery: Banknote,
-    bank_transfer: Building2,
-    mobile_money: Smartphone,
-  };
-
-  const validateStep = (s: number): boolean => {
-    if (s === 1) {
-      if (!form.buyerName || !form.buyerPhone) {
-        toast.error("Please fill in your name and phone number");
-        return false;
-      }
-      return true;
-    }
-    if (s === 2) {
-      if (!form.shippingAddress || !form.shippingCity || !form.shippingRegion) {
-        toast.error("Please fill in your shipping address");
-        return false;
-      }
-      return true;
-    }
-    return true;
-  };
-
-  const nextStep = () => {
-    if (validateStep(step)) {
-      setStep((s) => Math.min(s + 1, 3));
-    }
-  };
-
-  const prevStep = () => {
-    setStep((s) => Math.max(s - 1, 1));
-  };
-
   const handleSubmit = async () => {
-    if (!validateStep(1) || !validateStep(2)) return;
+    if (!form.buyerName || !form.buyerPhone) {
+      toast.error("Please fill in your name and phone number");
+      return;
+    }
 
     try {
+      // Create one order per vendor
       let lastOrderNumber = "";
       let lastWhatsappLink = "";
 
@@ -160,6 +75,7 @@ export default function Checkout() {
 
         lastOrderNumber = result.orderNumber || "";
 
+        // Build WhatsApp message for vendor
         const itemsList = vendorItems.map((vi: CartItemWithProduct) =>
           `- ${vi.product!.name} x${vi.quantity} @ ${formatGHS(vi.product!.price)}`
         ).join("\n");
@@ -167,10 +83,9 @@ export default function Checkout() {
         const vendorTotal = vendorItems.reduce((s: number, vi: CartItemWithProduct) => s + parseFloat(vi.product!.price) * vi.quantity, 0);
         const msg = `🛒 *New VOOM Order: ${lastOrderNumber}*\n\nBuyer: ${form.buyerName}\nPhone: ${form.buyerPhone}\n\nItems:\n${itemsList}\n\n*Total: ${formatGHS(vendorTotal)}*\n\nShipping to: ${form.shippingAddress}, ${form.shippingCity}, ${form.shippingRegion}\n\n${form.notes ? `Notes: ${form.notes}` : ""}`;
 
-        const vendorPhone = vendorItems[0]?.vendor?.whatsapp || vendorItems[0]?.vendor?.phone || "";
-        if (vendorPhone) {
-          lastWhatsappLink = generateWhatsAppLink(vendorPhone, msg);
-        }
+        // Get vendor WhatsApp from first item
+        // We'll use a generic link for now
+        lastWhatsappLink = generateWhatsAppLink(form.buyerPhone, msg);
       }
 
       utils.cart.list.invalidate();
@@ -201,13 +116,6 @@ export default function Checkout() {
           Your order has been sent to the vendor. You can track it in your orders page.
         </p>
         <div className="space-y-4">
-          {orderCreated.whatsappLink && (
-            <Button className="w-full h-12 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white" asChild>
-              <a href={orderCreated.whatsappLink} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="h-4 w-4 mr-2" /> Contact Vendor on WhatsApp
-              </a>
-            </Button>
-          )}
           <Button className="w-full h-12 text-white rounded-full" onClick={() => navigate("/orders")}>
             View My Orders
           </Button>
@@ -232,161 +140,103 @@ export default function Checkout() {
   return (
     <div className="min-h-screen bg-background/50">
       <div className="container py-10">
-        <h1 className="text-2xl font-light tracking-wide mb-2">Checkout</h1>
-        <p className="text-sm text-muted-foreground/60 tracking-wide mb-6">Step {step} of 3</p>
+        <h1 className="text-2xl font-light tracking-wide mb-8">Checkout</h1>
 
-        <StepIndicator currentStep={step} />
+        {vendorGroups.size > 1 && (
+          <div className="mb-8 rounded-2xl border border-amber-300/50 bg-amber-50/80 backdrop-blur-sm p-5 flex items-start gap-3">
+            <span className="text-xl flex-shrink-0 mt-0.5">⚠</span>
+            <div>
+              <p className="font-semibold tracking-wide text-amber-900">Multiple vendors detected</p>
+              <p className="text-sm text-amber-800/70 mt-1 tracking-wide leading-relaxed">
+                Your cart contains items from {vendorGroups.size} different vendors. A separate order will be created for each vendor, and each vendor will confirm and ship independently.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Step 1: Contact Information */}
-            {step === 1 && (
-              <Card className="zen-card glass rounded-2xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
-                <CardHeader className="pb-4">
-                  <CardTitle className="font-medium tracking-wide">Contact Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                      <Label className="tracking-wide">Full Name *</Label>
-                      <Input
-                        value={form.buyerName}
-                        onChange={(e) => setForm({ ...form, buyerName: e.target.value })}
-                        placeholder="Your full name"
-                      />
-                    </div>
-                    <div>
-                      <Label className="tracking-wide">Phone Number *</Label>
-                      <Input
-                        value={form.buyerPhone}
-                        onChange={(e) => setForm({ ...form, buyerPhone: e.target.value.replace(/[^0-9\s-]/g, "") })}
-                        placeholder="e.g. 0241234567"
-                        type="tel"
-                        inputMode="numeric"
-                        className={form.buyerPhone && form.buyerPhone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.buyerPhone.replace(/[\s-]/g, "")) ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}
-                      />
-                      {form.buyerPhone && form.buyerPhone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.buyerPhone.replace(/[\s-]/g, "")) && (
-                        <p className="text-xs text-destructive/70 mt-1 tracking-wide">Enter a valid phone number</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex justify-end pt-2">
-                    <Button onClick={nextStep} className="rounded-full text-white gap-2 px-6">
-                      Continue to Shipping <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Step 2: Shipping Address */}
-            {step === 2 && (
-              <Card className="zen-card glass rounded-2xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
-                <CardHeader className="pb-4">
-                  <CardTitle className="font-medium tracking-wide">Shipping Address</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
+            <Card className="zen-card glass rounded-2xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+              <CardHeader className="pb-4">
+                <CardTitle className="font-medium tracking-wide">Contact Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <Label className="tracking-wide">Address *</Label>
+                    <Label className="tracking-wide">Full Name *</Label>
                     <Input
-                      value={form.shippingAddress}
-                      onChange={(e) => setForm({ ...form, shippingAddress: e.target.value })}
-                      placeholder="Street address or landmark"
+                      value={form.buyerName}
+                      onChange={(e) => setForm({ ...form, buyerName: e.target.value })}
+                      placeholder="Your full name"
                     />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                      <Label className="tracking-wide">City *</Label>
-                      <Select value={form.shippingCity} onValueChange={(v) => setForm({ ...form, shippingCity: v })}>
-                        <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
-                        <SelectContent>
-                          {GHANA_CITIES.map((city) => (
-                            <SelectItem key={city} value={city}>{city}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="tracking-wide">Region *</Label>
-                      <Select value={form.shippingRegion} onValueChange={(v) => setForm({ ...form, shippingRegion: v })}>
-                        <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
-                        <SelectContent>
-                          {GHANA_REGIONS.map((region) => (
-                            <SelectItem key={region} value={region}>{region}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
                   <div>
-                    <Label className="tracking-wide">Order Notes (optional)</Label>
-                    <Textarea
-                      value={form.notes}
-                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                      placeholder="Any special instructions for the vendor..."
-                      rows={3}
+                    <Label className="tracking-wide">Phone Number *</Label>
+                    <Input
+                      value={form.buyerPhone}
+                      type="tel"
+                      inputMode="numeric"
+                      onChange={(e) => setForm({ ...form, buyerPhone: e.target.value.replace(/[^0-9\s-]/g, "") })}
+                      placeholder="e.g. 0241234567"
+                      className={form.buyerPhone && form.buyerPhone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.buyerPhone.replace(/[\s-]/g, "")) ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}
                     />
+                    {form.buyerPhone && form.buyerPhone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.buyerPhone.replace(/[\s-]/g, "")) && (
+                      <p className="text-xs text-destructive/70 mt-1.5 tracking-wide">Enter a valid Ghana phone (e.g. 024 123 4567)</p>
+                    )}
                   </div>
-                  <div className="flex justify-between pt-2">
-                    <Button variant="outline" onClick={prevStep} className="rounded-full gap-2 border-white/20">
-                      <ArrowLeft className="h-4 w-4" /> Back
-                    </Button>
-                    <Button onClick={nextStep} className="rounded-full text-white gap-2 px-6">
-                      Continue to Payment <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* Step 3: Payment Method */}
-            {step === 3 && (
-              <Card className="zen-card glass rounded-2xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
-                <CardHeader className="pb-4">
-                  <CardTitle className="font-medium tracking-wide">Payment Method</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {PAYMENT_METHODS.map((method) => {
-                    const Icon = paymentIcons[method.value];
-                    const isSelected = form.paymentMethod === method.value;
-                    return (
-                      <button
-                        key={method.value}
-                        type="button"
-                        onClick={() => setForm({ ...form, paymentMethod: method.value })}
-                        className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all ${
-                          isSelected
-                            ? "border-primary/40 bg-primary/5 shadow-sm"
-                            : "border-white/20 bg-white/30 hover:bg-white/40"
-                        }`}
-                      >
-                        <Icon className={`h-5 w-5 ${isSelected ? "text-primary" : "text-muted-foreground/60"}`} />
-                        <span className={`tracking-wide text-sm ${isSelected ? "font-medium" : "text-muted-foreground/80"}`}>
-                          {method.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                  <div className="flex justify-between pt-4">
-                    <Button variant="outline" onClick={prevStep} className="rounded-full gap-2 border-white/20">
-                      <ArrowLeft className="h-4 w-4" /> Back
-                    </Button>
-                    <Button
-                      className="rounded-full text-white gap-2 px-6"
-                      disabled={createOrder.isPending}
-                      onClick={handleSubmit}
-                    >
-                      {createOrder.isPending ? (
-                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Placing Order...</>
-                      ) : (
-                        <>Place Order</>
-                      )}
-                    </Button>
+            <Card className="zen-card glass rounded-2xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+              <CardHeader className="pb-4">
+                <CardTitle className="font-medium tracking-wide">Shipping Address</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div>
+                  <Label className="tracking-wide">Address</Label>
+                  <Input
+                    value={form.shippingAddress}
+                    onChange={(e) => setForm({ ...form, shippingAddress: e.target.value })}
+                    placeholder="Street address or landmark"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <Label className="tracking-wide">City</Label>
+                    <Select value={form.shippingCity} onValueChange={(v) => setForm({ ...form, shippingCity: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
+                      <SelectContent>
+                        {GHANA_CITIES.map((city) => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  <div>
+                    <Label className="tracking-wide">Region</Label>
+                    <Select value={form.shippingRegion} onValueChange={(v) => setForm({ ...form, shippingRegion: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
+                      <SelectContent>
+                        {GHANA_REGIONS.map((region) => (
+                          <SelectItem key={region} value={region}>{region}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="tracking-wide">Order Notes (optional)</Label>
+                  <Textarea
+                    value={form.notes}
+                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    placeholder="Any special instructions for the vendor..."
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Summary */}
@@ -413,18 +263,18 @@ export default function Checkout() {
                   <span>Total</span>
                   <span className="text-primary/90">{formatGHS(total)}</span>
                 </div>
-                {vendorGroups.size > 1 && (
-                  <div className="flex items-start gap-2.5 text-xs text-amber-700 tracking-wide bg-amber-50 border border-amber-200/50 rounded-xl p-3.5">
-                    <span className="text-amber-500 text-base leading-none mt-0.5">⚠</span>
-                    <div>
-                      <p className="font-medium mb-0.5">Multiple vendors detected</p>
-                      <p className="text-amber-600/80">
-                        Your cart has items from {vendorGroups.size} different vendors.
-                        {" "}{vendorGroups.size} separate orders will be created, each confirmed independently.
-                      </p>
-                    </div>
-                  </div>
-                )}
+                <Button
+                  className="w-full h-12 text-white rounded-full"
+                  size="lg"
+                  disabled={createOrder.isPending}
+                  onClick={handleSubmit}
+                >
+                  {createOrder.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Placing Order...</>
+                  ) : (
+                    <>Place Order</>
+                  )}
+                </Button>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground/60 tracking-wide justify-center">
                   <MessageCircle className="h-3.5 w-3.5" />
                   Vendor will confirm via WhatsApp

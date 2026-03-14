@@ -189,8 +189,8 @@ class SDKServer {
 
     return new SignJWT({
       openId: payload.openId,
-      appId: payload.appId,
-      name: payload.name,
+      appId: payload.appId || "voom-default",
+      name: payload.name || "user",
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
       .setExpirationTime(expirationSeconds)
@@ -212,18 +212,15 @@ class SDKServer {
       });
       const { openId, appId, name } = payload as Record<string, unknown>;
 
-      if (
-        !isNonEmptyString(openId) ||
-        !isNonEmptyString(appId)
-      ) {
-        console.warn("[Auth] Session payload missing required fields");
+      if (!isNonEmptyString(openId)) {
+        console.warn("[Auth] Session payload missing openId");
         return null;
       }
 
       return {
         openId,
         appId,
-        name: (typeof name === "string" ? name : ""),
+        name,
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
@@ -269,12 +266,8 @@ class SDKServer {
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
-    // If user not in DB, try to sync from OAuth server (skip for phone-auth users)
+    // If user not in DB, sync from OAuth server automatically
     if (!user) {
-      if (sessionUserId.startsWith("phone:")) {
-        // Phone-auth user not found — session is invalid
-        throw ForbiddenError("User not found");
-      }
       try {
         const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
         await db.upsertUser({

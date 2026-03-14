@@ -1,5 +1,4 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,15 +24,10 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 glass-strong shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
-      <div className="container flex items-center justify-between h-16">
+      <div className="container flex items-center justify-between h-24">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 no-underline">
-          <div className="w-9 h-9 rounded-2xl bg-primary/90 flex items-center justify-center shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)]">
-            <span className="text-white font-semibold text-lg tracking-wide">V</span>
-          </div>
-          <span className="text-xl font-light text-foreground tracking-[0.12em]">
-            VOOM
-          </span>
+        <Link href="/" className="flex items-center no-underline">
+          <img src="/voom-logo.png" alt="VOOM" className="h-20 w-auto" />
         </Link>
 
         {/* Desktop Nav */}
@@ -73,7 +67,7 @@ export default function Navbar() {
 
               {/* Cart */}
               <Link href="/cart">
-                <Button variant="ghost" size="icon" className="relative text-muted-foreground rounded-2xl" aria-label={`Cart${cartCount > 0 ? ` (${cartCount} items)` : ""}`}>
+                <Button variant="ghost" size="icon" className="relative text-muted-foreground rounded-2xl" aria-label={`Shopping cart${cartCount > 0 ? ` (${cartCount} item${cartCount !== 1 ? "s" : ""})` : ""}`}>
                   <ShoppingCart className="h-[18px] w-[18px]" />
                   {cartCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary/90 text-[10px] font-semibold text-white flex items-center justify-center shadow-sm">
@@ -97,11 +91,6 @@ export default function Navbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52 rounded-2xl glass-strong border-white/20 shadow-[0_8px_32px_-6px_rgba(0,0,0,0.08)]">
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2 no-underline">
-                      <User className="h-4 w-4" /> My Profile
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/orders" className="flex items-center gap-2 no-underline">
                       <Package className="h-4 w-4" /> My Orders
@@ -130,22 +119,22 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="rounded-full" asChild>
-                <a href={getLoginUrl()}>Sign In</a>
+              <Button variant="ghost" size="sm" className="rounded-full hidden sm:inline-flex" asChild>
+                <Link href="/sign-in" className="no-underline">Sign In</Link>
               </Button>
-              <Button size="sm" className="rounded-full shadow-[0_4px_16px_-4px_rgba(0,0,0,0.10)]" asChild>
-                <a href={getLoginUrl()} className="text-white no-underline">
+              <Button size="sm" className="rounded-full shadow-[0_4px_16px_-4px_rgba(0,0,0,0.10)] text-xs sm:text-sm px-3 sm:px-4" asChild>
+                <Link href="/sign-in?redirect=/vendor/register" className="text-white no-underline">
                   Sell Parts
-                </a>
+                </Link>
               </Button>
             </div>
           )}
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Menu Toggle — only on small screens */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-muted-foreground rounded-2xl"
+            className="md:hidden text-muted-foreground rounded-2xl ml-0.5"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -159,13 +148,32 @@ export default function Navbar() {
           <MobileNavLink href="/products" onClick={() => setMobileOpen(false)}>Browse Parts</MobileNavLink>
           <MobileNavLink href="/vendors" onClick={() => setMobileOpen(false)}>Vendors</MobileNavLink>
           <MobileNavLink href="/categories" onClick={() => setMobileOpen(false)}>Categories</MobileNavLink>
-          {isAuthenticated && (
+          {isAuthenticated ? (
             <>
               <MobileNavLink href="/orders" onClick={() => setMobileOpen(false)}>My Orders</MobileNavLink>
-              {user?.role !== "user" && (
+              {user?.role === "vendor" || user?.role === "admin" ? (
                 <MobileNavLink href="/vendor/dashboard" onClick={() => setMobileOpen(false)}>Vendor Dashboard</MobileNavLink>
+              ) : (
+                <MobileNavLink href="/vendor/register" onClick={() => setMobileOpen(false)}>Sell Parts</MobileNavLink>
               )}
             </>
+          ) : (
+            <div className="pt-2 border-t border-white/10 mt-2 space-y-1">
+              <Link
+                href="/sign-in"
+                className="block px-4 py-3 rounded-2xl text-sm tracking-wide text-primary font-medium no-underline hover:bg-primary/5 transition-colors"
+                onClick={() => setMobileOpen(false)}
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-in?redirect=/vendor/register"
+                className="block px-4 py-3 rounded-2xl text-sm tracking-wide text-foreground font-medium no-underline hover:bg-primary/5 transition-colors"
+                onClick={() => setMobileOpen(false)}
+              >
+                Sell Parts
+              </Link>
+            </div>
           )}
         </div>
       )}

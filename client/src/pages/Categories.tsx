@@ -1,27 +1,9 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
-import { Link } from "wouter";
-import {
-  Cog, CircleStop, ArrowUpDown, Zap, Car, Settings,
-  Wind, Thermometer, Droplets, Lightbulb, Circle, Armchair, Loader2, ChevronRight, AlertTriangle,
-} from "lucide-react";
+import { ChevronRight, AlertTriangle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  "engine-parts": <Cog className="h-8 w-8" />,
-  "brake-system": <CircleStop className="h-8 w-8" />,
-  "suspension": <ArrowUpDown className="h-8 w-8" />,
-  "electrical": <Zap className="h-8 w-8" />,
-  "body-parts": <Car className="h-8 w-8" />,
-  "transmission": <Settings className="h-8 w-8" />,
-  "exhaust-system": <Wind className="h-8 w-8" />,
-  "cooling-system": <Thermometer className="h-8 w-8" />,
-  "filters-fluids": <Droplets className="h-8 w-8" />,
-  "lighting": <Lightbulb className="h-8 w-8" />,
-  "tires-wheels": <Circle className="h-8 w-8" />,
-  "interior": <Armchair className="h-8 w-8" />,
-};
+import CategoryOrb from "@/components/CategoryOrb";
+import { Link } from "wouter";
 
 export default function Categories() {
   const categories = trpc.category.list.useQuery();
@@ -37,43 +19,33 @@ export default function Categories() {
 
       <div className="container py-10">
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground/70 mb-8" aria-label="Breadcrumb">
-          <Link href="/" className="hover:text-primary/90 no-underline tracking-wide">Home</Link>
+          <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
           <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-foreground/80 tracking-wide">Categories</span>
+          <span className="text-foreground">Categories</span>
         </nav>
+
         {categories.isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 py-8">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Card key={i} className="rounded-2xl border-white/20 bg-white/50">
-                <CardContent className="p-8 flex flex-col items-center gap-4">
-                  <Skeleton className="w-16 h-16 rounded-2xl" />
-                  <Skeleton className="h-4 w-24" />
-                </CardContent>
-              </Card>
+              <div key={i} className="flex flex-col items-center gap-3">
+                <Skeleton className="w-20 h-20 rounded-full" />
+                <Skeleton className="h-4 w-24" />
+              </div>
             ))}
           </div>
         ) : categories.error ? (
-          <Card className="border-dashed border-white/20 rounded-3xl bg-white/50">
-            <CardContent className="py-20 text-center">
-              <AlertTriangle className="h-10 w-10 mx-auto mb-5 text-destructive/50" />
-              <h3 className="font-light tracking-wide text-lg mb-3">Failed to load categories</h3>
-              <p className="text-muted-foreground/70 text-sm tracking-wide mb-6">{categories.error.message}</p>
-              <Button variant="outline" className="rounded-full" onClick={() => categories.refetch()}>Try Again</Button>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <AlertTriangle className="h-10 w-10 text-destructive/60" />
+            <h3 className="font-medium text-lg">Failed to load categories</h3>
+            <p className="text-sm text-muted-foreground">{categories.error.message}</p>
+            <Button variant="outline" onClick={() => categories.refetch()} className="rounded-full">
+              Retry
+            </Button>
+          </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+          <div className="flex flex-wrap justify-center gap-12 py-8">
             {(categories.data || []).map((cat) => (
-              <Link key={cat.id} href={`/products?categoryId=${cat.id}`} className="no-underline">
-                <Card className="zen-card rounded-2xl border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] hover:border-primary/20 transition-all duration-500 group cursor-pointer h-full">
-                  <CardContent className="p-8 flex flex-col items-center gap-4 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center text-primary/70 group-hover:bg-primary group-hover:text-white transition-all duration-500">
-                      {CATEGORY_ICONS[cat.slug] || <Cog className="h-8 w-8" />}
-                    </div>
-                    <h3 className="font-medium tracking-wide text-foreground/80">{cat.name}</h3>
-                  </CardContent>
-                </Card>
-              </Link>
+              <CategoryOrb key={cat.id} id={cat.id} name={cat.name} slug={cat.slug} icon={cat.icon} />
             ))}
           </div>
         )}

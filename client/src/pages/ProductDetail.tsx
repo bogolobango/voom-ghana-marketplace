@@ -7,10 +7,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { useParams, Link } from "wouter";
 import { formatGHS, generateWhatsAppLink } from "@shared/marketplace";
-import { Textarea } from "@/components/ui/textarea";
 import {
   ShoppingCart, MessageCircle, MapPin, Star, ChevronRight,
-  Package, ShieldCheck, Loader2, Phone, Store, Send, Hash,
+  Package, ShieldCheck, Loader2, Phone, Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -23,41 +22,53 @@ export default function ProductDetail() {
     onSuccess: () => toast.success("Added to cart!"),
     onError: () => toast.error("Please sign in to add items to cart"),
   });
-  const sendInquiry = trpc.inquiry.create.useMutation({
-    onSuccess: () => {
-      toast.success("Inquiry sent! The vendor will be notified.");
-      setShowInquiry(false);
-      setInquiryMessage("");
-    },
-    onError: (err: { message: string }) => toast.error(err.message),
-  });
   const utils = trpc.useUtils();
   const [selectedImage, setSelectedImage] = useState(0);
-  const [showInquiry, setShowInquiry] = useState(false);
-  const [inquiryMessage, setInquiryMessage] = useState("");
 
   if (product.isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container py-10">
-          <Skeleton className="h-5 w-32 mb-8" />
+          {/* Breadcrumb skeleton */}
+          <div className="flex items-center gap-1.5 mb-8">
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-3.5 w-3.5 rounded-full" />
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-3.5 w-3.5 rounded-full" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Image skeleton */}
             <div className="space-y-4">
-              <Skeleton className="aspect-square rounded-3xl" />
+              <Skeleton className="aspect-square w-full rounded-3xl" />
               <div className="flex gap-3">
-                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="w-16 h-16 rounded-2xl" />)}
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="w-16 h-16 rounded-2xl flex-shrink-0" />
+                ))}
               </div>
             </div>
+
+            {/* Details skeleton */}
             <div className="space-y-6">
               <Skeleton className="h-4 w-32" />
               <Skeleton className="h-8 w-3/4" />
-              <div className="flex gap-2">
+              <div className="flex items-center gap-3">
                 <Skeleton className="h-6 w-20 rounded-full" />
                 <Skeleton className="h-6 w-16 rounded-full" />
               </div>
-              <Skeleton className="h-24 rounded-3xl" />
-              <Skeleton className="h-13 rounded-full" />
-              <Skeleton className="h-12 rounded-full" />
+              <div className="rounded-3xl p-6 bg-white/50">
+                <Skeleton className="h-8 w-36" />
+              </div>
+              <div className="flex gap-3">
+                <Skeleton className="h-13 flex-1 rounded-full" />
+                <Skeleton className="h-13 w-32 rounded-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
             </div>
           </div>
         </div>
@@ -90,7 +101,7 @@ export default function ProductDetail() {
           <ChevronRight className="h-3.5 w-3.5" />
           <Link href="/products" className="hover:text-primary/90 no-underline tracking-wide">Parts</Link>
           <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-foreground/80 tracking-wide line-clamp-1">{p.name}</span>
+          <span className="text-foreground/80 tracking-wide">{p.name}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -120,7 +131,7 @@ export default function ProductDetail() {
                       i === selectedImage ? "border-primary/90 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]" : "border-transparent opacity-70 hover:opacity-100"
                     }`}
                   >
-                    <img src={img} alt="" loading="lazy" className="w-full h-full object-cover" />
+                    <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -140,22 +151,10 @@ export default function ProductDetail() {
             <h1 className="text-2xl md:text-3xl font-light tracking-wide text-foreground">{p.name}</h1>
 
             <div className="flex items-center gap-3 flex-wrap">
-              <Badge
-                variant={p.condition === "new" ? "default" : "secondary"}
-                className={`rounded-full tracking-wide ${
-                  p.condition === "new" ? "bg-emerald-50 text-emerald-700 border border-emerald-200/40" :
-                  p.condition === "used" ? "bg-amber-50 text-amber-700 border border-amber-200/40" :
-                  "bg-sky-50 text-sky-700 border border-sky-200/40"
-                }`}
-              >
+              <Badge variant={p.condition === "new" ? "default" : "secondary"} className="rounded-full tracking-wide">
                 {p.condition === "new" ? "Brand New" : p.condition === "used" ? "Used / Tokunbo" : "Refurbished"}
               </Badge>
               {p.brand && <Badge variant="outline" className="rounded-full border-border/30 tracking-wide">{p.brand}</Badge>}
-              {p.oemPartNumber && (
-                <Badge variant="outline" className="rounded-full border-border/30 tracking-wide font-mono text-xs">
-                  <Hash className="h-3 w-3 mr-1" /> {p.oemPartNumber}
-                </Badge>
-              )}
               {p.quantity !== undefined && p.quantity > 0 && (
                 <span className="text-sm text-voom-green font-medium flex items-center gap-1 tracking-wide">
                   <ShieldCheck className="h-4 w-4" /> In Stock ({p.quantity} available)
@@ -174,68 +173,11 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Actions — Request to Buy Flow */}
-            <div className="space-y-3">
-              <div className="flex gap-3">
-                {whatsappLink && (
-                  <Button size="lg" className="flex-1 h-13 bg-voom-green hover:bg-voom-green/90 text-white rounded-full tracking-wide shadow-[0_4px_24px_-4px_rgba(0,0,0,0.08)]" asChild>
-                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="no-underline">
-                      <MessageCircle className="h-5 w-5 mr-2" />
-                      Chat on WhatsApp
-                    </a>
-                  </Button>
-                )}
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="flex-1 h-13 rounded-full border-primary/30 text-primary hover:bg-primary/5 tracking-wide"
-                  onClick={() => {
-                    if (!isAuthenticated) {
-                      toast.error("Please sign in to send an inquiry");
-                      return;
-                    }
-                    setShowInquiry(!showInquiry);
-                  }}
-                >
-                  <Send className="h-5 w-5 mr-2" />
-                  Inquire In-App
-                </Button>
-              </div>
-
-              {/* In-App Inquiry Form */}
-              {showInquiry && (
-                <Card className="zen-card rounded-2xl border-primary/10 bg-primary/[0.02]">
-                  <CardContent className="p-4 space-y-3">
-                    <p className="text-sm font-medium tracking-wide">Send an inquiry to this vendor</p>
-                    <Textarea
-                      placeholder={`Hi, I'm interested in "${p.name}". Is it available? What's the best price?`}
-                      value={inquiryMessage}
-                      onChange={(e) => setInquiryMessage(e.target.value)}
-                      className="rounded-xl border-border/30 text-sm min-h-[80px]"
-                    />
-                    <Button
-                      className="w-full rounded-full"
-                      disabled={sendInquiry.isPending}
-                      onClick={() => {
-                        if (!vendor) return;
-                        sendInquiry.mutate({
-                          productId: p.id,
-                          vendorId: vendor.id,
-                          message: inquiryMessage || `I'm interested in "${p.name}". Is it available?`,
-                        });
-                      }}
-                    >
-                      {sendInquiry.isPending ? "Sending..." : "Send Inquiry"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Secondary: Add to Cart */}
+            {/* Actions */}
+            <div className="flex gap-3">
               <Button
                 size="lg"
-                variant="outline"
-                className="w-full h-12 rounded-full border-border/30 tracking-wide text-muted-foreground"
+                className="flex-1 h-13 text-white rounded-full tracking-wide shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]"
                 disabled={p.quantity === 0 || addToCart.isPending}
                 onClick={() => {
                   if (!isAuthenticated) {
@@ -247,9 +189,17 @@ export default function ProductDetail() {
                   });
                 }}
               >
-                <ShoppingCart className="h-4 w-4 mr-2" />
+                <ShoppingCart className="h-5 w-5 mr-2" />
                 {addToCart.isPending ? "Adding..." : "Add to Cart"}
               </Button>
+              {whatsappLink && (
+                <Button size="lg" variant="outline" className="h-13 border-voom-green/60 text-voom-green hover:bg-voom-green/5 rounded-full tracking-wide" asChild>
+                  <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="no-underline">
+                    <MessageCircle className="h-5 w-5 mr-2" />
+                    WhatsApp
+                  </a>
+                </Button>
+              )}
             </div>
 
             {/* Description */}
@@ -274,23 +224,11 @@ export default function ProductDetail() {
                       <Link href={`/vendors/${vendor.id}`} className="font-medium tracking-wide text-foreground hover:text-primary/90 no-underline">
                         {vendor.businessName}
                       </Link>
-                      <div className="flex items-center gap-3 mt-1">
-                        {vendor.city && (
-                          <span className="text-sm text-muted-foreground flex items-center gap-1 tracking-wide">
-                            <MapPin className="h-3.5 w-3.5" /> {vendor.city}
-                          </span>
-                        )}
-                        {vendor.rating && parseFloat(String(vendor.rating)) > 0 && (
-                          <span className="text-sm text-amber-600 flex items-center gap-1 tracking-wide">
-                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> {parseFloat(String(vendor.rating)).toFixed(1)}
-                          </span>
-                        )}
-                        {vendor.totalSales && vendor.totalSales > 0 && (
-                          <span className="text-xs text-muted-foreground/60 tracking-wide">
-                            {vendor.totalSales} sales
-                          </span>
-                        )}
-                      </div>
+                      {vendor.city && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1 tracking-wide">
+                          <MapPin className="h-3.5 w-3.5" /> {vendor.city}, {vendor.region}
+                        </p>
+                      )}
                       {vendor.phone && (
                         <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1 tracking-wide">
                           <Phone className="h-3.5 w-3.5" /> {vendor.phone}

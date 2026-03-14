@@ -1,14 +1,11 @@
-import { serial, pgTable, pgEnum, text, timestamp, varchar, decimal, boolean, json, integer } from "drizzle-orm/pg-core";
+import { integer, pgEnum, pgTable, text, timestamp, varchar, decimal, boolean, json, serial } from "drizzle-orm/pg-core";
 
-export const roleEnum = pgEnum("role", ["user", "admin", "vendor"]);
+export const userRoleEnum = pgEnum("user_role", ["user", "admin", "vendor"]);
 export const vendorStatusEnum = pgEnum("vendor_status", ["pending", "approved", "rejected", "suspended"]);
-export const conditionEnum = pgEnum("condition", ["new", "used", "refurbished"]);
+export const productConditionEnum = pgEnum("product_condition", ["new", "used", "refurbished"]);
 export const productStatusEnum = pgEnum("product_status", ["active", "inactive", "out_of_stock"]);
 export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]);
-export const paymentMethodEnum = pgEnum("payment_method", ["pay_on_delivery", "bank_transfer", "mobile_money"]);
-export const paymentStatusEnum = pgEnum("payment_status", ["unpaid", "paid", "refunded"]);
-export const notificationTypeEnum = pgEnum("notification_type", ["order", "vendor", "system", "inventory", "inquiry"]);
-export const inquiryStatusEnum = pgEnum("inquiry_status", ["pending", "responded", "sold", "closed"]);
+export const notificationTypeEnum = pgEnum("notification_type", ["order", "vendor", "system", "inventory"]);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -17,10 +14,8 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 320 }),
   phone: varchar("phone", { length: 20 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: roleEnum("role").default("user").notNull(),
-  otpCode: varchar("otpCode", { length: 10 }),
-  otpExpiresAt: timestamp("otpExpiresAt"),
-  isVerified: boolean("isVerified").default(false).notNull(),
+  passwordHash: text("passwordHash"),
+  role: userRoleEnum("role").default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -42,10 +37,6 @@ export const vendors = pgTable("vendors", {
   region: varchar("region", { length: 100 }),
   latitude: decimal("latitude", { precision: 10, scale: 7 }),
   longitude: decimal("longitude", { precision: 10, scale: 7 }),
-  ghanaCardNumber: varchar("ghanaCardNumber", { length: 30 }),
-  ghanaCardImageUrl: text("ghanaCardImageUrl"),
-  businessRegNumber: varchar("businessRegNumber", { length: 50 }),
-  businessRegImageUrl: text("businessRegImageUrl"),
   logoUrl: text("logoUrl"),
   coverUrl: text("coverUrl"),
   status: vendorStatusEnum("status").default("pending").notNull(),
@@ -69,21 +60,6 @@ export const categories = pgTable("categories", {
 
 export type Category = typeof categories.$inferSelect;
 
-export const vehicleMakes = pgTable("vehicle_makes", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull().unique(),
-});
-
-export type VehicleMake = typeof vehicleMakes.$inferSelect;
-
-export const vehicleModels = pgTable("vehicle_models", {
-  id: serial("id").primaryKey(),
-  makeId: integer("makeId").notNull(),
-  name: varchar("name", { length: 100 }).notNull(),
-});
-
-export type VehicleModel = typeof vehicleModels.$inferSelect;
-
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   vendorId: integer("vendorId").notNull(),
@@ -94,19 +70,14 @@ export const products = pgTable("products", {
   currency: varchar("currency", { length: 3 }).default("GHS").notNull(),
   sku: varchar("sku", { length: 100 }),
   brand: varchar("brand", { length: 100 }),
-  condition: conditionEnum("condition").default("new").notNull(),
-  // Vehicle compatibility
+  condition: productConditionEnum("condition").default("new").notNull(),
   vehicleMake: varchar("vehicleMake", { length: 100 }),
   vehicleModel: varchar("vehicleModel", { length: 100 }),
   yearFrom: integer("yearFrom"),
   yearTo: integer("yearTo"),
-  oemPartNumber: varchar("oemPartNumber", { length: 100 }),
-  // Inventory
   quantity: integer("quantity").default(0).notNull(),
   minOrderQty: integer("minOrderQty").default(1),
-  // Media
   images: json("images").$type<string[]>(),
-  // Status
   status: productStatusEnum("status").default("active").notNull(),
   featured: boolean("featured").default(false),
   views: integer("views").default(0),
@@ -134,8 +105,6 @@ export const orders = pgTable("orders", {
   userId: integer("userId").notNull(),
   vendorId: integer("vendorId").notNull(),
   status: orderStatusEnum("status").default("pending").notNull(),
-  paymentMethod: paymentMethodEnum("paymentMethod").default("pay_on_delivery").notNull(),
-  paymentStatus: paymentStatusEnum("paymentStatus").default("unpaid").notNull(),
   totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("GHS").notNull(),
   shippingAddress: text("shippingAddress"),
@@ -144,7 +113,6 @@ export const orders = pgTable("orders", {
   buyerPhone: varchar("buyerPhone", { length: 20 }),
   buyerName: varchar("buyerName", { length: 255 }),
   notes: text("notes"),
-  statusHistory: json("statusHistory").$type<{ status: string; at: string; by?: string }[]>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -187,20 +155,3 @@ export const notifications = pgTable("notifications", {
 });
 
 export type Notification = typeof notifications.$inferSelect;
-
-export const inquiries = pgTable("inquiries", {
-  id: serial("id").primaryKey(),
-  buyerId: integer("buyerId").notNull(),
-  vendorId: integer("vendorId").notNull(),
-  productId: integer("productId").notNull(),
-  message: text("message"),
-  buyerPhone: varchar("buyerPhone", { length: 20 }),
-  buyerName: varchar("buyerName", { length: 255 }),
-  status: inquiryStatusEnum("status").default("pending").notNull(),
-  vendorNotes: text("vendorNotes"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
-
-export type Inquiry = typeof inquiries.$inferSelect;
-export type InsertInquiry = typeof inquiries.$inferInsert;

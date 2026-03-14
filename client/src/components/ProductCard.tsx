@@ -25,7 +25,10 @@ export default function ProductCard({ product, vendorName }: ProductCardProps) {
               alt={product.name}
               loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-600 ease-out"
-              onError={(e) => { e.currentTarget.style.display = "none"; e.currentTarget.nextElementSibling?.classList.remove("hidden"); }}
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+                e.currentTarget.nextElementSibling?.classList.remove("hidden");
+              }}
             />
           ) : null}
           <div className={`w-full h-full flex items-center justify-center text-muted-foreground bg-gradient-to-br from-white/40 to-white/20 ${firstImage ? "hidden" : ""}`}>
