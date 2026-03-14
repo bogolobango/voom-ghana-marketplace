@@ -15,10 +15,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { formatGHS, VEHICLE_MAKES, PART_CONDITIONS } from "@shared/marketplace";
+import { formatGHS, generateWhatsAppLink, VEHICLE_MAKES, PART_CONDITIONS } from "@shared/marketplace";
 import {
   Package, ShoppingCart, Plus, Loader2, Store, TrendingUp,
-  Edit, Trash2, Eye,
+  Edit, Trash2, Eye, MessageCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -321,6 +321,23 @@ export default function VendorDashboard() {
                             <span className="text-xs text-muted-foreground tracking-wide">Qty: {product.quantity}</span>
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-voom-green hover:text-voom-green/80 rounded-2xl"
+                          onClick={() => {
+                            const phone = vendor.data?.whatsapp || vendor.data?.phone;
+                            if (!phone) {
+                              toast.error("No WhatsApp number configured");
+                              return;
+                            }
+                            const msg = `Check out this ${product.name} for ${formatGHS(product.price)} on VOOM Ghana!\n\nhttps://voomghana.com/products/${product.id}`;
+                            window.open(generateWhatsAppLink(phone, msg), "_blank");
+                          }}
+                          title="Share on WhatsApp"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button

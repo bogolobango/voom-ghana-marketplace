@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { VehicleProvider } from "./contexts/VehicleContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -48,16 +49,18 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          <div className="min-h-screen flex flex-col zen-bg">
-            <Navbar />
-            <main className="flex-1">
-              <Router />
-            </main>
-            <Footer />
-          </div>
-        </TooltipProvider>
+        <VehicleProvider>
+          <TooltipProvider>
+            <Toaster />
+            <div className="min-h-screen flex flex-col zen-bg">
+              <Navbar />
+              <main className="flex-1">
+                <Router />
+              </main>
+              <Footer />
+            </div>
+          </TooltipProvider>
+        </VehicleProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

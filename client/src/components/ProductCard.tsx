@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { MapPin, Star, Package } from "lucide-react";
+import { MapPin, Star, Package, ShieldCheck } from "lucide-react";
 import { formatGHS } from "@shared/marketplace";
 import type { Product } from "../../../drizzle/schema";
 
@@ -81,9 +81,14 @@ export default function ProductCard({ product, vendorName }: ProductCardProps) {
 
           {/* Vendor */}
           {vendorName && (
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1 pt-0.5 tracking-wide">
-              <MapPin className="h-3 w-3" /> {vendorName}
-            </p>
+            <div className="flex items-center gap-2 pt-0.5">
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1 tracking-wide">
+                <MapPin className="h-3 w-3" /> {vendorName}
+              </p>
+              <span className="inline-flex items-center gap-1 text-xs text-voom-green font-medium">
+                <ShieldCheck className="h-3.5 w-3.5" /> Verified
+              </span>
+            </div>
           )}
         </CardContent>
       </Card>

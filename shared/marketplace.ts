@@ -46,12 +46,12 @@ export function isValidStatusTransition(from: string, to: string): boolean {
 }
 
 export const PAYMENT_METHODS = [
-  { value: "pay_on_delivery", label: "Pay on Delivery" },
-  { value: "bank_transfer", label: "Bank Transfer" },
   { value: "mobile_money", label: "Mobile Money (MoMo)" },
+  { value: "card", label: "Card Payment" },
+  { value: "pay_on_delivery", label: "Pay on Pickup" },
 ] as const;
 
-export type PaymentMethod = "pay_on_delivery" | "bank_transfer" | "mobile_money";
+export type PaymentMethod = "pay_on_delivery" | "mobile_money" | "card";
 export type PaymentStatus = "unpaid" | "paid" | "refunded";
 
 // Ghana phone number validation (must be 10 digits starting with 0, or 12 digits starting with 233)

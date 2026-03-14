@@ -337,6 +337,27 @@ export async function getAllOrders() {
   return db.select().from(orders).orderBy(desc(orders.createdAt));
 }
 
+export async function getOrderByOrderNumber(orderNumber: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [order] = await db.select().from(orders).where(eq(orders.orderNumber, orderNumber)).limit(1);
+  if (!order) return undefined;
+  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+  return { ...order, items };
+}
+
+export async function updateOrderPayment(id: number, data: { paymentStatus?: string; paymentReference?: string; paymentMethod?: string }) {
+  const db = await getDb();
+  if (!db) return;
+  const set: Record<string, unknown> = {};
+  if (data.paymentStatus) set.paymentStatus = data.paymentStatus;
+  if (data.paymentReference) set.paymentReference = data.paymentReference;
+  if (data.paymentMethod) set.paymentMethod = data.paymentMethod;
+  if (Object.keys(set).length > 0) {
+    await db.update(orders).set(set as any).where(eq(orders.id, id));
+  }
+}
+
 // ─── Notification Helpers ───
 export async function createNotification(data: { userId: number; title: string; message: string; type?: string; link?: string }) {
   const db = await getDb();

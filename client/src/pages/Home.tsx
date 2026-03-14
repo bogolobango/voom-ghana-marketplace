@@ -3,20 +3,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import ProductCard from "@/components/ProductCard";
 import CategoryOrb from "@/components/CategoryOrb";
+import VehicleSearch from "@/components/VehicleSearch";
 import {
   Search, ArrowRight, ShieldCheck, Truck, MessageCircle,
-  Store, AlertTriangle,
+  Store, AlertTriangle, Car,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
+  const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchMode, setSearchMode] = useState<"vehicle" | "text">("vehicle");
   const stats = trpc.publicStats.useQuery();
   const categories = trpc.category.list.useQuery();
   const featured = trpc.product.featured.useQuery();
@@ -45,34 +48,73 @@ export default function Home() {
               Search thousands of genuine and affordable car parts from verified vendors across Ghana.
             </p>
 
-            {/* Search Bar — frosted glass capsule */}
-            <div className="flex gap-2 sm:gap-3 max-w-lg">
-              <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
-                <Input
-                  placeholder="Search parts, e.g. 'brake pads'"
-                  className="pl-11 h-12 sm:h-13 bg-white/90 text-foreground border-white/30 rounded-[100px] shadow-[0_8px_32px_-6px_rgba(0,0,0,0.12)] backdrop-blur-xl text-sm"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && searchQuery.trim()) {
-                      window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`;
-                    }
+            {/* Search Mode Toggle */}
+            <div className="flex gap-2 mb-2">
+              <button
+                onClick={() => setSearchMode("vehicle")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium tracking-wide transition-all ${
+                  searchMode === "vehicle"
+                    ? "bg-white/90 text-foreground shadow-[0_4px_16px_-4px_rgba(0,0,0,0.1)]"
+                    : "text-white/60 hover:text-white/80"
+                }`}
+              >
+                <Car className="h-3.5 w-3.5" /> Search by Vehicle
+              </button>
+              <button
+                onClick={() => setSearchMode("text")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium tracking-wide transition-all ${
+                  searchMode === "text"
+                    ? "bg-white/90 text-foreground shadow-[0_4px_16px_-4px_rgba(0,0,0,0.1)]"
+                    : "text-white/60 hover:text-white/80"
+                }`}
+              >
+                <Search className="h-3.5 w-3.5" /> Search by Name
+              </button>
+            </div>
+
+            {/* Vehicle Selector — the primary search UX */}
+            {searchMode === "vehicle" ? (
+              <div className="max-w-xl">
+                <VehicleSearch
+                  variant="hero"
+                  onSearch={(filters) => {
+                    const params = new URLSearchParams();
+                    if (filters.make) params.set("make", filters.make);
+                    if (filters.model) params.set("model", filters.model);
+                    if (filters.year) params.set("yearFrom", filters.year);
+                    navigate(`/products?${params.toString()}`);
                   }}
                 />
               </div>
-              <Button
-                size="lg"
-                className="h-12 sm:h-13 px-5 sm:px-7 bg-primary/90 hover:bg-primary text-white rounded-[100px] shadow-[0_8px_32px_-6px_rgba(0,0,0,0.15)] shrink-0 text-sm sm:text-base"
-                onClick={() => {
-                  if (searchQuery.trim()) {
-                    window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`;
-                  }
-                }}
-              >
-                Search
-              </Button>
-            </div>
+            ) : (
+              <div className="flex gap-2 sm:gap-3 max-w-lg">
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+                  <Input
+                    placeholder="Search parts, e.g. 'brake pads'"
+                    className="pl-11 h-12 sm:h-13 bg-white/90 text-foreground border-white/30 rounded-[100px] shadow-[0_8px_32px_-6px_rgba(0,0,0,0.12)] backdrop-blur-xl text-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && searchQuery.trim()) {
+                        navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+                      }
+                    }}
+                  />
+                </div>
+                <Button
+                  size="lg"
+                  className="h-12 sm:h-13 px-5 sm:px-7 bg-primary/90 hover:bg-primary text-white rounded-[100px] shadow-[0_8px_32px_-6px_rgba(0,0,0,0.15)] shrink-0 text-sm sm:text-base"
+                  onClick={() => {
+                    if (searchQuery.trim()) {
+                      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+                    }
+                  }}
+                >
+                  Search
+                </Button>
+              </div>
+            )}
 
             {/* Quick Stats — glass tiles */}
             <div className="flex flex-wrap gap-4 sm:gap-6 pt-6">

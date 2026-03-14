@@ -5,6 +5,8 @@ export const vendorStatusEnum = pgEnum("vendor_status", ["pending", "approved", 
 export const productConditionEnum = pgEnum("product_condition", ["new", "used", "refurbished"]);
 export const productStatusEnum = pgEnum("product_status", ["active", "inactive", "out_of_stock"]);
 export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]);
+export const paymentMethodEnum = pgEnum("payment_method", ["pay_on_delivery", "mobile_money", "card"]);
+export const paymentStatusEnum = pgEnum("payment_status", ["unpaid", "paid", "refunded"]);
 export const notificationTypeEnum = pgEnum("notification_type", ["order", "vendor", "system", "inventory"]);
 
 export const users = pgTable("users", {
@@ -105,6 +107,9 @@ export const orders = pgTable("orders", {
   userId: integer("userId").notNull(),
   vendorId: integer("vendorId").notNull(),
   status: orderStatusEnum("status").default("pending").notNull(),
+  paymentMethod: paymentMethodEnum("paymentMethod").default("pay_on_delivery").notNull(),
+  paymentStatus: paymentStatusEnum("paymentStatus").default("unpaid").notNull(),
+  paymentReference: varchar("paymentReference", { length: 255 }),
   totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("GHS").notNull(),
   shippingAddress: text("shippingAddress"),

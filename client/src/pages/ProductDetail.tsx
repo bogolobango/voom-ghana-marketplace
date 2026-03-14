@@ -89,7 +89,7 @@ export default function ProductDetail() {
   const images = (p.images as string[] | null) || [];
   const vendor = p.vendor;
 
-  const whatsappMessage = `Hi, I'm interested in "${p.name}" listed at ${formatGHS(p.price)} on VOOM Ghana Marketplace. Is it still available?`;
+  const whatsappMessage = `Hi, I'm interested in "${p.name}" listed at ${formatGHS(p.price)} on VOOM Ghana Marketplace. Is it still available?\n\nhttps://voomghana.com/products/${p.id}`;
   const whatsappLink = vendor?.whatsapp ? generateWhatsAppLink(vendor.whatsapp, whatsappMessage) : null;
 
   return (
@@ -221,9 +221,14 @@ export default function ProductDetail() {
                       <Store className="h-6 w-6 text-primary/90" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <Link href={`/vendors/${vendor.id}`} className="font-medium tracking-wide text-foreground hover:text-primary/90 no-underline">
-                        {vendor.businessName}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/vendors/${vendor.id}`} className="font-medium tracking-wide text-foreground hover:text-primary/90 no-underline">
+                          {vendor.businessName}
+                        </Link>
+                        <span className="inline-flex items-center gap-1 text-xs text-voom-green font-medium">
+                          <ShieldCheck className="h-3.5 w-3.5" /> Verified
+                        </span>
+                      </div>
                       {vendor.city && (
                         <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1 tracking-wide">
                           <MapPin className="h-3.5 w-3.5" /> {vendor.city}, {vendor.region}
@@ -235,9 +240,18 @@ export default function ProductDetail() {
                         </p>
                       )}
                     </div>
-                    <Link href={`/vendors/${vendor.id}`}>
-                      <Button variant="outline" size="sm" className="rounded-full border-border/30 tracking-wide">View Shop</Button>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      {whatsappLink && (
+                        <Button variant="outline" size="icon" className="rounded-full border-voom-green/60 text-voom-green hover:bg-voom-green/5 h-9 w-9" asChild>
+                          <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                            <MessageCircle className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      <Link href={`/vendors/${vendor.id}`}>
+                        <Button variant="outline" size="sm" className="rounded-full border-border/30 tracking-wide">View Shop</Button>
+                      </Link>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

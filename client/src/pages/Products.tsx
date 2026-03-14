@@ -14,9 +14,12 @@ export default function Products() {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [categoryId, setCategoryId] = useState(searchParams.get("categoryId") || "");
   const [vehicleMake, setVehicleMake] = useState(searchParams.get("make") || "");
-  const [vehicleModel, setVehicleModel] = useState("");
+  const [vehicleModel, setVehicleModel] = useState(searchParams.get("model") || "");
+  const [yearFrom, setYearFrom] = useState(searchParams.get("yearFrom") || "");
   const [condition, setCondition] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(
+    !!(searchParams.get("make") || searchParams.get("model") || searchParams.get("yearFrom") || searchParams.get("categoryId"))
+  );
   const [page, setPage] = useState(0);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
@@ -31,10 +34,26 @@ export default function Products() {
     categoryId: categoryId ? Number(categoryId) : undefined,
     vehicleMake: vehicleMake || undefined,
     vehicleModel: vehicleModel || undefined,
+    yearFrom: yearFrom ? Number(yearFrom) : undefined,
     condition: condition || undefined,
     limit: 20,
     offset: page * 20,
-  }), [search, categoryId, vehicleMake, vehicleModel, condition, page]);
+  }), [search, categoryId, vehicleMake, vehicleModel, yearFrom, condition, page]);
+
+  // Sync filters to URL for shareable/bookmarkable searches
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (categoryId) params.set("categoryId", categoryId);
+    if (vehicleMake) params.set("make", vehicleMake);
+    if (vehicleModel) params.set("model", vehicleModel);
+    if (yearFrom) params.set("yearFrom", yearFrom);
+    const newUrl = params.toString() ? `?${params.toString()}` : "";
+    const currentUrl = window.location.search;
+    if (newUrl !== currentUrl) {
+      window.history.replaceState(null, "", `/products${newUrl}`);
+    }
+  }, [search, categoryId, vehicleMake, vehicleModel, yearFrom]);
 
   const products = trpc.product.search.useQuery(filters);
 
@@ -64,13 +83,14 @@ export default function Products() {
     setPage(0);
   };
 
-  const hasActiveFilters = !!(search || categoryId || vehicleMake || vehicleModel || condition);
+  const hasActiveFilters = !!(search || categoryId || vehicleMake || vehicleModel || yearFrom || condition);
 
   const clearFilters = () => {
     setSearch("");
     setCategoryId("");
     setVehicleMake("");
     setVehicleModel("");
+    setYearFrom("");
     setCondition("");
     setPage(0);
   };
@@ -148,7 +168,7 @@ export default function Products() {
 
           {/* Filters Panel */}
           {showFilters && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 pt-5 border-t border-white/20">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-5 pt-5 border-t border-white/20">
               <Select value={categoryId} onValueChange={(v) => { setCategoryId(v); setPage(0); }}>
                 <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Category" /></SelectTrigger>
                 <SelectContent>
@@ -172,6 +192,15 @@ export default function Products() {
                 <SelectContent>
                   {(models.data || []).map((model) => (
                     <SelectItem key={model} value={model}>{model}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={yearFrom} onValueChange={(v) => { setYearFrom(v); setPage(0); }}>
+                <SelectTrigger className="rounded-2xl"><SelectValue placeholder="Year" /></SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 30 }, (_, i) => String(2026 - i)).map((y) => (
+                    <SelectItem key={y} value={y}>{y}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -200,6 +229,7 @@ export default function Products() {
               )}
               {vehicleMake && <FilterTag label={vehicleMake} onRemove={() => { setVehicleMake(""); setVehicleModel(""); }} />}
               {vehicleModel && <FilterTag label={vehicleModel} onRemove={() => setVehicleModel("")} />}
+              {yearFrom && <FilterTag label={`Year: ${yearFrom}`} onRemove={() => setYearFrom("")} />}
               {condition && <FilterTag label={condition} onRemove={() => setCondition("")} />}
               <button onClick={clearFilters} className="text-xs text-primary/90 hover:underline ml-1 tracking-wide">Clear all</button>
             </div>
@@ -271,14 +301,25 @@ export default function Products() {
           <Card className="border-dashed border-white/20 rounded-3xl glass shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
             <CardContent className="py-20 text-center">
               <Search className="h-10 w-10 mx-auto mb-5 text-muted-foreground/40" />
-              <h3 className="font-light tracking-wide text-lg mb-3">No parts found</h3>
+              <h3 className="font-light tracking-wide text-lg mb-3">
+                {vehicleMake ? `No exact matches for ${vehicleMake}${vehicleModel ? ` ${vehicleModel}` : ""}${yearFrom ? ` (${yearFrom})` : ""}` : "No parts found"}
+              </h3>
               <p className="text-muted-foreground text-sm tracking-wide">
-                Try adjusting your search or filters to find what you need.
+                {vehicleMake
+                  ? "Try removing the year or model filter, or browse all parts below."
+                  : "Try adjusting your search or filters to find what you need."}
               </p>
               {hasActiveFilters && (
-                <Button variant="outline" className="mt-5 rounded-full border-border/30 tracking-wide" onClick={clearFilters}>
-                  Clear Filters
-                </Button>
+                <div className="flex gap-3 justify-center mt-5">
+                  {vehicleMake && vehicleModel && (
+                    <Button variant="outline" className="rounded-full border-border/30 tracking-wide" onClick={() => { setVehicleModel(""); setYearFrom(""); setPage(0); }}>
+                      Show all {vehicleMake} parts
+                    </Button>
+                  )}
+                  <Button variant="outline" className="rounded-full border-border/30 tracking-wide" onClick={clearFilters}>
+                    Clear All Filters
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>

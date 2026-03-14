@@ -6,7 +6,7 @@ import { useParams, Link } from "wouter";
 import ProductCard from "@/components/ProductCard";
 import { generateWhatsAppLink } from "@shared/marketplace";
 import {
-  MapPin, Phone, MessageCircle, Star, Store, ArrowLeft, Loader2, Mail,
+  MapPin, Phone, MessageCircle, Star, Store, ArrowLeft, Loader2, Mail, ShieldCheck,
 } from "lucide-react";
 
 export default function VendorDetail() {
@@ -51,7 +51,12 @@ export default function VendorDetail() {
               )}
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-light tracking-wide text-white">{v.businessName}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl md:text-3xl font-light tracking-wide text-white">{v.businessName}</h1>
+                <Badge className="bg-voom-green/20 text-voom-green border-voom-green/40 rounded-full text-xs">
+                  <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Verified Vendor
+                </Badge>
+              </div>
               <div className="flex items-center gap-3 mt-3 flex-wrap">
                 {v.city && (
                   <span className="text-sm text-white/50 flex items-center gap-1 tracking-wide">

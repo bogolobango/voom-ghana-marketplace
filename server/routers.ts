@@ -260,6 +260,7 @@ export const appRouter = router({
       buyerPhone: z.string().optional(),
       buyerName: z.string().optional(),
       notes: z.string().optional(),
+      paymentMethod: z.enum(["pay_on_delivery", "mobile_money", "card"]).optional(),
       items: z.array(z.object({
         productId: z.number(),
         productName: z.string(),
@@ -270,7 +271,7 @@ export const appRouter = router({
     })).mutation(async ({ ctx, input }) => {
       const orderNumber = `VOM-${nanoid(8).toUpperCase()}`;
       const totalAmount = input.items.reduce((sum, item) => sum + parseFloat(item.totalPrice), 0).toFixed(2);
-      const { items, ...rest } = input;
+      const { items, paymentMethod, ...rest } = input;
       const result = await db.createOrder({
         orderNumber,
         userId: ctx.user.id,
@@ -278,6 +279,10 @@ export const appRouter = router({
         ...rest,
         items,
       });
+      // Update payment method if specified
+      if (result && paymentMethod) {
+        await db.updateOrderPayment(result.id, { paymentMethod });
+      }
       // Clear cart after order
       await db.clearCart(ctx.user.id);
       // Notify vendor
@@ -288,7 +293,7 @@ export const appRouter = router({
         type: "order",
         link: `/vendor/orders`,
       });
-      return { success: true, orderNumber, orderId: result?.id };
+      return { success: true, orderNumber, orderId: result?.id, totalAmount };
     }),
     myOrders: protectedProcedure.query(async ({ ctx }) => {
       return db.getUserOrders(ctx.user.id);

@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { MapPin, Star, Store, ChevronRight, AlertTriangle } from "lucide-react";
+import { MapPin, Star, Store, ChevronRight, AlertTriangle, ShieldCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
@@ -66,9 +66,14 @@ export default function Vendors() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium tracking-wide text-foreground group-hover:text-primary/90 transition-colors truncate">
-                          {vendor.businessName}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium tracking-wide text-foreground group-hover:text-primary/90 transition-colors truncate">
+                            {vendor.businessName}
+                          </h3>
+                          <span className="inline-flex items-center gap-1 text-xs text-voom-green font-medium flex-shrink-0">
+                            <ShieldCheck className="h-3.5 w-3.5" /> Verified
+                          </span>
+                        </div>
                         {vendor.city && (
                           <p className="text-sm text-muted-foreground/80 flex items-center gap-1 mt-1.5 tracking-wide">
                             <MapPin className="h-3.5 w-3.5" /> {vendor.city}, {vendor.region}
