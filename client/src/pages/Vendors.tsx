@@ -2,7 +2,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { MapPin, Star, Store, Loader2 } from "lucide-react";
+import { MapPin, Star, Store, ChevronRight, AlertTriangle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 export default function Vendors() {
   const vendors = trpc.vendor.list.useQuery();
@@ -17,9 +19,37 @@ export default function Vendors() {
       </div>
 
       <div className="container py-12">
+        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground/70 mb-8" aria-label="Breadcrumb">
+          <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-foreground">Vendors</span>
+        </nav>
+
         {vendors.isLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 animate-spin text-primary/90" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="zen-card glass rounded-2xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="w-14 h-14 rounded-2xl flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : vendors.error ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <AlertTriangle className="h-10 w-10 text-destructive/60" />
+            <h3 className="font-medium text-lg">Failed to load vendors</h3>
+            <p className="text-sm text-muted-foreground">{vendors.error.message}</p>
+            <Button variant="outline" onClick={() => vendors.refetch()} className="rounded-full">
+              Retry
+            </Button>
           </div>
         ) : (vendors.data?.length || 0) > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -30,7 +60,7 @@ export default function Vendors() {
                     <div className="flex items-start gap-4">
                       <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
                         {vendor.logoUrl ? (
-                          <img src={vendor.logoUrl} alt="" className="w-full h-full rounded-2xl object-cover" />
+                          <img src={vendor.logoUrl} alt={vendor.businessName + " logo"} loading="lazy" className="w-full h-full rounded-2xl object-cover" />
                         ) : (
                           <Store className="h-7 w-7 text-primary/90" />
                         )}

@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const stats = trpc.admin.stats.useQuery(undefined, { enabled: user?.role === "admin" });
   const vendors = trpc.admin.vendors.useQuery(undefined, { enabled: user?.role === "admin" });
   const orders = trpc.admin.orders.useQuery(undefined, { enabled: user?.role === "admin" });
+  const utils = trpc.useUtils();
   const seedCategories = trpc.admin.seedCategories.useMutation({
     onSuccess: (data) => toast.success(`Seeded ${data.count} categories!`),
     onError: (err) => toast.error(err.message),
@@ -25,7 +26,6 @@ export default function AdminDashboard() {
   const updateVendorStatus = trpc.admin.updateVendorStatus.useMutation({
     onSuccess: () => { utils.admin.vendors.invalidate(); utils.admin.stats.invalidate(); toast.success("Vendor status updated"); },
   });
-  const utils = trpc.useUtils();
 
   if (loading) {
     return (

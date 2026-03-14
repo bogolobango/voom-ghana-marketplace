@@ -7,6 +7,7 @@ import { Bell, Check, Loader2 } from "lucide-react";
 
 export default function Notifications() {
   const { isAuthenticated } = useAuth();
+  const utils = trpc.useUtils();
   const notifications = trpc.notification.list.useQuery(undefined, { enabled: isAuthenticated });
   const markRead = trpc.notification.markRead.useMutation({
     onSuccess: () => utils.notification.list.invalidate(),
@@ -14,7 +15,6 @@ export default function Notifications() {
   const markAllRead = trpc.notification.markAllRead.useMutation({
     onSuccess: () => utils.notification.list.invalidate(),
   });
-  const utils = trpc.useUtils();
 
   if (!isAuthenticated) {
     return (

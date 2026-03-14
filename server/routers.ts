@@ -25,6 +25,9 @@ const vendorProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 
 export const appRouter = router({
   system: systemRouter,
+  publicStats: publicProcedure.query(async () => {
+    return db.getPublicStats();
+  }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

@@ -17,6 +17,7 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
 
   if (!isUnauthorized) return;
+  if (window.location.pathname === "/login") return;
 
   window.location.href = getLoginUrl();
 };
@@ -42,6 +43,9 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
+      headers() {
+        return { "x-trpc-source": "client" };
+      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

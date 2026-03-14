@@ -373,6 +373,20 @@ export async function getVendorReviews(vendorId: number) {
   return db.select().from(reviews).where(eq(reviews.vendorId, vendorId)).orderBy(desc(reviews.createdAt));
 }
 
+// ─── Public Stats ───
+export async function getPublicStats() {
+  const db = await getDb();
+  if (!db) return { totalProducts: 0, totalVendors: 0, totalCategories: 0 };
+  const [productCount] = await db.select({ count: sql<number>`count(*)` }).from(products);
+  const [vendorCount] = await db.select({ count: sql<number>`count(*)` }).from(vendors).where(eq(vendors.status, "approved"));
+  const [categoryCount] = await db.select({ count: sql<number>`count(*)` }).from(categories);
+  return {
+    totalProducts: Number(productCount?.count || 0),
+    totalVendors: Number(vendorCount?.count || 0),
+    totalCategories: Number(categoryCount?.count || 0),
+  };
+}
+
 // ─── Admin Stats ───
 export async function getAdminStats() {
   const db = await getDb();

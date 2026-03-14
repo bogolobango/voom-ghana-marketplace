@@ -142,6 +142,18 @@ export default function Checkout() {
       <div className="container py-10">
         <h1 className="text-2xl font-light tracking-wide mb-8">Checkout</h1>
 
+        {vendorGroups.size > 1 && (
+          <div className="mb-8 rounded-2xl border border-amber-300/50 bg-amber-50/80 backdrop-blur-sm p-5 flex items-start gap-3">
+            <span className="text-xl flex-shrink-0 mt-0.5">⚠</span>
+            <div>
+              <p className="font-semibold tracking-wide text-amber-900">Multiple vendors detected</p>
+              <p className="text-sm text-amber-800/70 mt-1 tracking-wide leading-relaxed">
+                Your cart contains items from {vendorGroups.size} different vendors. A separate order will be created for each vendor, and each vendor will confirm and ship independently.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form */}
           <div className="lg:col-span-2 space-y-8">
@@ -163,9 +175,15 @@ export default function Checkout() {
                     <Label className="tracking-wide">Phone Number *</Label>
                     <Input
                       value={form.buyerPhone}
-                      onChange={(e) => setForm({ ...form, buyerPhone: e.target.value })}
+                      type="tel"
+                      inputMode="numeric"
+                      onChange={(e) => setForm({ ...form, buyerPhone: e.target.value.replace(/[^0-9\s-]/g, "") })}
                       placeholder="e.g. 0241234567"
+                      className={form.buyerPhone && form.buyerPhone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.buyerPhone.replace(/[\s-]/g, "")) ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}
                     />
+                    {form.buyerPhone && form.buyerPhone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.buyerPhone.replace(/[\s-]/g, "")) && (
+                      <p className="text-xs text-destructive/70 mt-1.5 tracking-wide">Enter a valid Ghana phone (e.g. 024 123 4567)</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
