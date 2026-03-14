@@ -1,7 +1,8 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Navbar from "./components/Navbar";
@@ -20,6 +21,14 @@ import Notifications from "./pages/Notifications";
 import Categories from "./pages/Categories";
 import AdminDashboard from "./pages/AdminDashboard";
 import SignIn from "./pages/SignIn";
+
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [location]);
+  return null;
+}
 
 function Router() {
   return (
@@ -51,6 +60,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <div className="min-h-screen flex flex-col zen-bg">
+            <ScrollToTop />
             <Navbar />
             <main className="flex-1">
               <Router />
