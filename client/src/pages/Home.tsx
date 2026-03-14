@@ -9,13 +9,15 @@ import ProductCard from "@/components/ProductCard";
 import CategoryOrb from "@/components/CategoryOrb";
 import {
   Search, ArrowRight, ShieldCheck, Truck, MessageCircle,
-  Store,
+  Store, AlertTriangle,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const stats = trpc.publicStats.useQuery();
   const categories = trpc.category.list.useQuery();
   const featured = trpc.product.featured.useQuery();
   const latest = trpc.product.latest.useQuery();
@@ -73,13 +75,13 @@ export default function Home() {
             </div>
 
             {/* Quick Stats — glass tiles */}
-            <div className="flex flex-wrap gap-3 pt-1">
+            <div className="flex flex-wrap gap-4 sm:gap-6 pt-6">
               <div className="glass-dark rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3">
-                <p className="text-xl sm:text-2xl font-light text-white tracking-wide">1,000+</p>
+                <p className="text-xl sm:text-2xl font-light text-white tracking-wide">{stats.data ? (stats.data.totalProducts > 0 ? `${stats.data.totalProducts}+` : "0") : "..."}</p>
                 <p className="text-[10px] sm:text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Parts Listed</p>
               </div>
               <div className="glass-dark rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3">
-                <p className="text-xl sm:text-2xl font-light text-white tracking-wide">50+</p>
+                <p className="text-xl sm:text-2xl font-light text-white tracking-wide">{stats.data ? stats.data.totalVendors : "..."}</p>
                 <p className="text-[10px] sm:text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Verified Vendors</p>
               </div>
               <div className="glass-dark rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3">
@@ -115,6 +117,15 @@ export default function Home() {
               </Button>
             </Link>
           </div>
+          {categories.error && (
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <AlertTriangle className="h-10 w-10 text-destructive/60" />
+              <h3 className="font-medium text-lg">Failed to load categories</h3>
+              <Button variant="outline" onClick={() => categories.refetch()} className="rounded-full">
+                Retry
+              </Button>
+            </div>
+          )}
           <div className="flex flex-wrap justify-center gap-8 py-4">
             {(categories.data || []).slice(0, 10).map((cat) => (
               <CategoryOrb key={cat.id} id={cat.id} name={cat.name} slug={cat.slug} icon={cat.icon} />
@@ -124,7 +135,7 @@ export default function Home() {
       </section>
 
       {/* Featured Products */}
-      {(featured.data?.length || 0) > 0 && (
+      {((featured.data?.length || 0) > 0 || featured.error) && (
         <section className="zen-section relative">
           <div className="container">
             <div className="flex items-center justify-between mb-10">
@@ -138,11 +149,21 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-              {featured.data?.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            {featured.error ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-4">
+                <AlertTriangle className="h-10 w-10 text-destructive/60" />
+                <h3 className="font-medium text-lg">Failed to load featured products</h3>
+                <Button variant="outline" onClick={() => featured.refetch()} className="rounded-full">
+                  Retry
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+                {featured.data?.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}

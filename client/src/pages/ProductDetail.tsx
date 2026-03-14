@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { useParams, Link } from "wouter";
 import { formatGHS, generateWhatsAppLink } from "@shared/marketplace";
 import {
-  ShoppingCart, MessageCircle, MapPin, Star, ArrowLeft,
+  ShoppingCart, MessageCircle, MapPin, Star, ChevronRight,
   Package, ShieldCheck, Loader2, Phone, Store,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,8 +27,51 @@ export default function ProductDetail() {
 
   if (product.isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/90" />
+      <div className="min-h-screen bg-background">
+        <div className="container py-10">
+          {/* Breadcrumb skeleton */}
+          <div className="flex items-center gap-1.5 mb-8">
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-3.5 w-3.5 rounded-full" />
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-3.5 w-3.5 rounded-full" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Image skeleton */}
+            <div className="space-y-4">
+              <Skeleton className="aspect-square w-full rounded-3xl" />
+              <div className="flex gap-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="w-16 h-16 rounded-2xl flex-shrink-0" />
+                ))}
+              </div>
+            </div>
+
+            {/* Details skeleton */}
+            <div className="space-y-6">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-8 w-3/4" />
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </div>
+              <div className="rounded-3xl p-6 bg-white/50">
+                <Skeleton className="h-8 w-36" />
+              </div>
+              <div className="flex gap-3">
+                <Skeleton className="h-13 flex-1 rounded-full" />
+                <Skeleton className="h-13 w-32 rounded-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -52,11 +96,13 @@ export default function ProductDetail() {
     <div className="min-h-screen bg-background">
       <div className="container py-10">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 mb-8">
-          <Link href="/products" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary/90 no-underline tracking-wide">
-            <ArrowLeft className="h-4 w-4" /> Back to Parts
-          </Link>
-        </div>
+        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground/70 mb-8" aria-label="Breadcrumb">
+          <Link href="/" className="hover:text-primary/90 no-underline tracking-wide">Home</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <Link href="/products" className="hover:text-primary/90 no-underline tracking-wide">Parts</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-foreground/80 tracking-wide">{p.name}</span>
+        </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* Images */}
@@ -80,11 +126,12 @@ export default function ProductDetail() {
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
+                    aria-label={`View image ${i + 1} of ${images.length}`}
                     className={`w-16 h-16 rounded-2xl overflow-hidden border-2 flex-shrink-0 transition-all duration-300 ${
                       i === selectedImage ? "border-primary/90 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]" : "border-transparent opacity-70 hover:opacity-100"
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
                   </button>
                 ))}
               </div>

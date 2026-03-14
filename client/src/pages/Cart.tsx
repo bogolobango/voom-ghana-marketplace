@@ -1,11 +1,23 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { formatGHS } from "@shared/marketplace";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Loader2, Package } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Loader2, Package, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Cart() {
@@ -36,8 +48,70 @@ export default function Cart() {
 
   if (cart.isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+      <div className="min-h-screen bg-background/50">
+        <div className="container py-10">
+          <Skeleton className="h-8 w-64 mb-8" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="zen-card glass rounded-2xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+                  <CardContent className="p-5">
+                    <div className="flex gap-5">
+                      <Skeleton className="w-20 h-20 rounded-2xl flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                      <div className="flex flex-col items-end justify-between">
+                        <Skeleton className="h-8 w-8 rounded-xl" />
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-9 w-9 rounded-xl" />
+                          <Skeleton className="h-4 w-6" />
+                          <Skeleton className="h-9 w-9 rounded-xl" />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <div>
+              <Card className="glass-strong rounded-3xl border-white/20 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+                <CardHeader className="pb-4">
+                  <Skeleton className="h-6 w-36" />
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="space-y-2.5">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex justify-between">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-4 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                  <Separator className="bg-border/30" />
+                  <div className="flex justify-between">
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-6 w-24" />
+                  </div>
+                  <Skeleton className="h-12 w-full rounded-full" />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (cart.error) {
+    return (
+      <div className="container py-24 text-center">
+        <AlertTriangle className="h-12 w-12 mx-auto mb-6 text-destructive/60" />
+        <h2 className="text-xl font-light tracking-wide mb-3">Failed to load cart</h2>
+        <p className="text-muted-foreground/70 text-sm tracking-wide mb-8">{cart.error.message}</p>
+        <Button className="rounded-full px-8" onClick={() => cart.refetch()}>Try Again</Button>
       </div>
     );
   }
@@ -108,20 +182,22 @@ export default function Cart() {
                           <Button
                             variant="outline"
                             size="icon"
-                            className="h-7 w-7 rounded-xl border-white/20"
+                            className="h-9 w-9 rounded-xl border-white/20"
                             disabled={item.quantity <= 1}
                             onClick={() => updateItem.mutate({ id: item.id, quantity: item.quantity - 1 })}
+                            aria-label="Decrease quantity"
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-3.5 w-3.5" />
                           </Button>
                           <span className="text-sm font-medium tracking-wide w-6 text-center">{item.quantity}</span>
                           <Button
                             variant="outline"
                             size="icon"
-                            className="h-7 w-7 rounded-xl border-white/20"
+                            className="h-9 w-9 rounded-xl border-white/20"
                             onClick={() => updateItem.mutate({ id: item.id, quantity: item.quantity + 1 })}
+                            aria-label="Increase quantity"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -130,9 +206,30 @@ export default function Cart() {
                 </Card>
               );
             })}
-            <Button variant="ghost" size="sm" className="text-destructive/70 tracking-wide" onClick={() => clearCart.mutate()}>
-              Clear Cart
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-destructive/70 tracking-wide">
+                  Clear Cart
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear your cart?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove all {items.length} items from your cart. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep Items</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => clearCart.mutate()}
+                  >
+                    Clear Cart
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
 
           {/* Order Summary */}
@@ -145,7 +242,10 @@ export default function Cart() {
                 <div className="space-y-2.5">
                   {items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground/70 tracking-wide truncate mr-2">
+                      <span
+                        className="text-muted-foreground/70 tracking-wide truncate mr-2"
+                        title={`${item.product?.name} x${item.quantity}`}
+                      >
                         {item.product?.name} x{item.quantity}
                       </span>
                       <span className="font-medium tracking-wide flex-shrink-0">

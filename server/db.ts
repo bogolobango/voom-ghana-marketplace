@@ -171,6 +171,7 @@ export async function searchProducts(filters: {
   condition?: string;
   minPrice?: number;
   maxPrice?: number;
+  vendorId?: number;
   limit?: number;
   offset?: number;
 }) {
@@ -195,6 +196,7 @@ export async function searchProducts(filters: {
   if (filters.condition) conditions.push(eq(products.condition, filters.condition as any));
   if (filters.minPrice) conditions.push(gte(products.price, String(filters.minPrice)));
   if (filters.maxPrice) conditions.push(lte(products.price, String(filters.maxPrice)));
+  if (filters.vendorId) conditions.push(eq(products.vendorId, filters.vendorId));
 
   const where = and(...conditions);
   const limit = filters.limit || 20;
@@ -371,6 +373,20 @@ export async function getVendorReviews(vendorId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(reviews).where(eq(reviews.vendorId, vendorId)).orderBy(desc(reviews.createdAt));
+}
+
+// ─── Public Stats ───
+export async function getPublicStats() {
+  const db = await getDb();
+  if (!db) return { totalProducts: 0, totalVendors: 0, totalCategories: 0 };
+  const [productCount] = await db.select({ count: sql<number>`count(*)` }).from(products);
+  const [vendorCount] = await db.select({ count: sql<number>`count(*)` }).from(vendors).where(eq(vendors.status, "approved"));
+  const [categoryCount] = await db.select({ count: sql<number>`count(*)` }).from(categories);
+  return {
+    totalProducts: Number(productCount?.count || 0),
+    totalVendors: Number(vendorCount?.count || 0),
+    totalCategories: Number(categoryCount?.count || 0),
+  };
 }
 
 // ─── Admin Stats ───

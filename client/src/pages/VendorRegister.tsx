@@ -32,6 +32,7 @@ export default function VendorRegister() {
     address: "",
     city: "",
     region: "",
+    ghanaCardNumber: "",
   });
 
   if (loading) {
@@ -177,11 +178,16 @@ export default function VendorRegister() {
               <div className="vendor-field">
                 <Label className="tracking-wide text-sm font-medium">Phone Number <span className="text-primary">*</span></Label>
                 <Input
-                  className="vendor-input mt-1.5"
+                  className={`vendor-input mt-1.5 ${form.phone && form.phone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.phone.replace(/[\s-]/g, "")) ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}`}
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  type="tel"
+                  inputMode="numeric"
+                  onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9\s-]/g, "") })}
                   placeholder="0241234567"
                 />
+                {form.phone && form.phone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.phone.replace(/[\s-]/g, "")) && (
+                  <p className="text-xs text-destructive/70 mt-1.5 tracking-wide">Enter a valid Ghana phone (e.g. 024 123 4567)</p>
+                )}
               </div>
               <div className="vendor-field">
                 <Label className="tracking-wide text-sm font-medium">WhatsApp Number</Label>
@@ -203,6 +209,19 @@ export default function VendorRegister() {
                 placeholder="business@email.com"
                 type="email"
               />
+            </div>
+
+            <div className="vendor-field">
+              <Label className="tracking-wide text-sm font-medium">Ghana Card Number</Label>
+              <Input
+                className={`vendor-input mt-1.5 ${form.ghanaCardNumber && !/^GHA-\d{9}-\d$/.test(form.ghanaCardNumber) ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}`}
+                value={form.ghanaCardNumber}
+                onChange={(e) => setForm({ ...form, ghanaCardNumber: e.target.value.toUpperCase() })}
+                placeholder="GHA-123456789-0"
+              />
+              {form.ghanaCardNumber && !/^GHA-\d{9}-\d$/.test(form.ghanaCardNumber) && (
+                <p className="text-xs text-destructive/70 mt-1.5 tracking-wide">Expected format: GHA-XXXXXXXXX-X (e.g. GHA-123456789-0)</p>
+              )}
             </div>
           </div>
 

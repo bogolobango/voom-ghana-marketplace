@@ -25,6 +25,9 @@ const vendorProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 
 export const appRouter = router({
   system: systemRouter,
+  publicStats: publicProcedure.query(async () => {
+    return db.getPublicStats();
+  }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -198,6 +201,7 @@ export const appRouter = router({
       condition: z.string().optional(),
       minPrice: z.number().optional(),
       maxPrice: z.number().optional(),
+      vendorId: z.number().optional(),
       limit: z.number().optional(),
       offset: z.number().optional(),
     })).query(async ({ input }) => {
