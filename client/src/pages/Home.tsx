@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { getLoginUrl } from "@/const";
 import ProductCard from "@/components/ProductCard";
 import CategoryOrb from "@/components/CategoryOrb";
 import {
@@ -200,7 +199,7 @@ export default function Home() {
                 </p>
                 {!isAuthenticated && (
                   <Button className="mt-8 rounded-full" size="lg" asChild>
-                    <a href={getLoginUrl()}>Get Started</a>
+                    <Link href="/vendor/register" className="no-underline">Get Started</Link>
                   </Button>
                 )}
               </CardContent>
@@ -254,7 +253,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Button size="lg" className="rounded-full w-full sm:w-auto" asChild>
-              <a href={getLoginUrl()} className="text-white no-underline">Start Selling Today</a>
+              <Link href="/vendor/register" className="text-white no-underline">Start Selling Today</Link>
             </Button>
             <Link href="/vendors" className="w-full sm:w-auto">
               <Button size="lg" variant="outline" className="rounded-full w-full bg-white/70 backdrop-blur-sm border-border/40">
