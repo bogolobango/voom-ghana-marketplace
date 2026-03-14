@@ -3,10 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { formatGHS } from "@shared/marketplace";
-import { Loader2, ArrowLeft, XCircle, Package, MapPin, Phone, User, CreditCard, Clock } from "lucide-react";
+import { Loader2, ArrowLeft, XCircle, Package, MapPin, Phone, User, CreditCard, Clock, Home, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -44,8 +49,45 @@ export default function OrderDetail() {
 
   if (order.isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/60" />
+      <div className="min-h-screen bg-gradient-to-b from-slate-50/80 to-white/60">
+        <div className="container py-10 max-w-4xl">
+          <Skeleton className="h-9 w-32 rounded-full mb-6" />
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <Skeleton className="h-7 w-48 mb-2" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <Skeleton className="h-7 w-24 rounded-full" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="rounded-2xl border-white/20 bg-white/50">
+              <CardContent className="p-6 space-y-3">
+                <Skeleton className="h-4 w-32 mb-3" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-36" />
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl border-white/20 bg-white/50">
+              <CardContent className="p-6 space-y-3">
+                <Skeleton className="h-4 w-32 mb-3" />
+                <Skeleton className="h-4 w-56" />
+                <Skeleton className="h-4 w-40" />
+              </CardContent>
+            </Card>
+          </div>
+          <Card className="rounded-2xl border-white/20 bg-white/50 mt-6">
+            <CardContent className="p-6 space-y-4">
+              <Skeleton className="h-4 w-24 mb-3" />
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="flex justify-between">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -85,15 +127,14 @@ export default function OrderDetail() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50/80 to-white/60">
       <div className="container py-10 max-w-4xl">
-        {/* Back button */}
-        <Button
-          variant="ghost"
-          className="mb-6 rounded-full text-muted-foreground/70"
-          onClick={() => navigate("/orders")}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Orders
-        </Button>
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground/70 mb-6" aria-label="Breadcrumb">
+          <Link href="/" className="hover:text-primary/90 no-underline tracking-wide">Home</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <Link href="/orders" className="hover:text-primary/90 no-underline tracking-wide">Orders</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-foreground/80 tracking-wide">{data?.orderNumber || "..."}</span>
+        </nav>
 
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -260,23 +301,36 @@ export default function OrderDetail() {
         {/* Cancel Button */}
         {data.status === "pending" && isBuyer && (
           <div className="mt-6 flex justify-end">
-            <Button
-              variant="outline"
-              className="rounded-full text-rose-600 border-rose-200/50 hover:bg-rose-50/50 tracking-wide"
-              disabled={cancelOrder.isPending}
-              onClick={() => {
-                if (confirm("Are you sure you want to cancel this order?")) {
-                  cancelOrder.mutate({ id: data.id });
-                }
-              }}
-            >
-              {cancelOrder.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <XCircle className="h-4 w-4 mr-2" />
-              )}
-              Cancel Order
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="rounded-full text-rose-600 border-rose-200/50 hover:bg-rose-50/50 tracking-wide"
+                  disabled={cancelOrder.isPending}
+                >
+                  {cancelOrder.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <XCircle className="h-4 w-4 mr-2" />
+                  )}
+                  Cancel Order
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-2xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Cancel order {data.orderNumber}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will cancel your order. If you've already paid, contact the vendor for a refund.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="rounded-full">Keep Order</AlertDialogCancel>
+                  <AlertDialogAction className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => cancelOrder.mutate({ id: data.id })}>
+                    Cancel Order
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
       </div>

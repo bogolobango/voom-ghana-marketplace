@@ -1,8 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { MapPin, Star, Store, Loader2 } from "lucide-react";
+import { MapPin, Star, Store, Loader2, ChevronRight, AlertTriangle } from "lucide-react";
 
 export default function Vendors() {
   const vendors = trpc.vendor.list.useQuery();
@@ -17,10 +19,38 @@ export default function Vendors() {
       </div>
 
       <div className="container py-12">
+        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground/70 mb-8" aria-label="Breadcrumb">
+          <Link href="/" className="hover:text-primary/90 no-underline tracking-wide">Home</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-foreground/80 tracking-wide">Vendors</span>
+        </nav>
         {vendors.isLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 animate-spin text-primary/90" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="rounded-2xl border-white/20 bg-white/50">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="w-14 h-14 rounded-2xl flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-full" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+        ) : vendors.error ? (
+          <Card className="border-dashed border-white/20 rounded-3xl bg-white/50">
+            <CardContent className="py-20 text-center">
+              <AlertTriangle className="h-10 w-10 mx-auto mb-5 text-destructive/50" />
+              <h3 className="font-light tracking-wide text-lg mb-3">Failed to load vendors</h3>
+              <p className="text-muted-foreground/70 text-sm tracking-wide mb-6">{vendors.error.message}</p>
+              <Button variant="outline" className="rounded-full" onClick={() => vendors.refetch()}>Try Again</Button>
+            </CardContent>
+          </Card>
         ) : (vendors.data?.length || 0) > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {vendors.data?.map((vendor) => (
@@ -30,7 +60,7 @@ export default function Vendors() {
                     <div className="flex items-start gap-4">
                       <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
                         {vendor.logoUrl ? (
-                          <img src={vendor.logoUrl} alt="" className="w-full h-full rounded-2xl object-cover" />
+                          <img src={vendor.logoUrl} alt={`${vendor.businessName} logo`} loading="lazy" className="w-full h-full rounded-2xl object-cover" />
                         ) : (
                           <Store className="h-7 w-7 text-primary/90" />
                         )}

@@ -2,10 +2,15 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { formatGHS } from "@shared/marketplace";
-import { Package, Loader2, ShoppingCart, XCircle } from "lucide-react";
+import { Package, Loader2, ShoppingCart, XCircle, AlertTriangle, ArrowLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -52,13 +57,46 @@ export default function Orders() {
         <h1 className="text-2xl font-light tracking-wide mb-8">My Orders</h1>
 
         {orders.isLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 animate-spin text-primary/60" />
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} className="rounded-2xl border-white/20 bg-white/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-6 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+        ) : orders.error ? (
+          <Card className="border-dashed border-white/20 rounded-3xl bg-white/50">
+            <CardContent className="py-20 text-center">
+              <AlertTriangle className="h-10 w-10 mx-auto mb-6 text-destructive/50" />
+              <h3 className="font-light tracking-wide text-lg mb-3">Failed to load orders</h3>
+              <p className="text-muted-foreground/70 text-sm tracking-wide mb-6">{orders.error.message}</p>
+              <Button variant="outline" className="rounded-full" onClick={() => orders.refetch()}>Try Again</Button>
+            </CardContent>
+          </Card>
         ) : (orders.data?.length || 0) > 0 ? (
           <div className="space-y-4">
             {orders.data?.map((order) => (
-              <Card key={order.id} className="zen-card rounded-2xl border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate(`/orders/${order.id}`)}>
+              <Card
+                key={order.id}
+                role="link"
+                tabIndex={0}
+                aria-label={`Order ${order.orderNumber}`}
+                className="zen-card rounded-2xl border-white/20 bg-white/50 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => navigate(`/orders/${order.id}`)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate(`/orders/${order.id}`); }}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -82,22 +120,36 @@ export default function Orders() {
                         </span>
                       )}
                       {order.status === "pending" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-full text-rose-600 border-rose-200/50 hover:bg-rose-50/50 text-xs"
-                          disabled={cancelOrder.isPending}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm("Are you sure you want to cancel this order?")) {
-                              cancelOrder.mutate({ id: order.id });
-                            }
-                          }}
-                        >
-                          <XCircle className="h-3.5 w-3.5 mr-1" />
-                          Cancel
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-full text-rose-600 border-rose-200/50 hover:bg-rose-50/50 text-xs"
+                              disabled={cancelOrder.isPending}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <XCircle className="h-3.5 w-3.5 mr-1" />
+                              Cancel
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel order {order.orderNumber}?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will cancel your order. If you've already paid, contact the vendor for a refund.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="rounded-full">Keep Order</AlertDialogCancel>
+                              <AlertDialogAction className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => cancelOrder.mutate({ id: order.id })}>
+                                Cancel Order
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
                     </div>
                   </div>
                 </CardContent>

@@ -650,6 +650,19 @@ export async function getVendorReviews(vendorId: number) {
 }
 
 // ─── Admin Stats ───
+export async function getPublicStats() {
+  const db = await getDb();
+  if (!db) return { totalProducts: 0, totalVendors: 0, totalCategories: 0 };
+  const [productCount] = await db.select({ count: sql<number>`count(*)` }).from(products);
+  const [vendorCount] = await db.select({ count: sql<number>`count(*)` }).from(vendors).where(eq(vendors.status, "approved"));
+  const [categoryCount] = await db.select({ count: sql<number>`count(*)` }).from(categories);
+  return {
+    totalProducts: Number(productCount?.count || 0),
+    totalVendors: Number(vendorCount?.count || 0),
+    totalCategories: Number(categoryCount?.count || 0),
+  };
+}
+
 export async function getAdminStats() {
   const db = await getDb();
   if (!db) return { totalVendors: 0, totalProducts: 0, totalOrders: 0, totalUsers: 0, pendingVendors: 0, totalRevenue: "0" };

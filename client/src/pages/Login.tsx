@@ -110,13 +110,17 @@ export default function Login() {
                     </div>
                     <Input
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(e.target.value.replace(/[^0-9\s]/g, ""))}
                       placeholder="024 123 4567"
                       type="tel"
-                      className="rounded-2xl border-border/30 h-12 flex-1"
+                      inputMode="numeric"
+                      className={`rounded-2xl border-border/30 h-12 flex-1 ${phone && !/^0[2-9]\d[\s-]?\d{3}[\s-]?\d{4}$/.test(phone.replace(/\s/g, "")) && phone.length > 3 ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}`}
                       onKeyDown={(e) => e.key === "Enter" && handleRequestOtp()}
                     />
                   </div>
+                  {phone && phone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(phone.replace(/[\s-]/g, "")) && (
+                    <p className="text-xs text-destructive/70 mt-1.5 tracking-wide">Enter a valid Ghana phone (e.g. 024 123 4567)</p>
+                  )}
                 </div>
 
                 <Button
@@ -144,7 +148,7 @@ export default function Login() {
                   <Label className="tracking-wide text-xs">OTP Code</Label>
                   <Input
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ""))}
                     placeholder="1234"
                     type="text"
                     inputMode="numeric"

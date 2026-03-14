@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import ProductCard from "@/components/ProductCard";
 import { Search, SlidersHorizontal, X, ArrowUpDown } from "lucide-react";
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, useId } from "react";
 import { useSearch, useLocation } from "wouter";
 import { VEHICLE_MAKES, PART_CONDITIONS } from "@shared/marketplace";
 import { useVehicle } from "@/contexts/VehicleContext";
@@ -118,9 +118,13 @@ export default function Products() {
     setPage(0);
   };
 
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const autocompleteId = useId();
+
   const selectAutocomplete = useCallback((name: string) => {
     setSearch(name);
     setShowAutocomplete(false);
+    setActiveIndex(-1);
     setPage(0);
   }, []);
 
@@ -137,26 +141,54 @@ export default function Products() {
                 placeholder="Search parts by name, brand, or vehicle..."
                 className="pl-11 h-12 rounded-[100px] bg-white/60 backdrop-blur-sm border-white/20 tracking-wide"
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(0); setShowAutocomplete(true); }}
+                onChange={(e) => { setSearch(e.target.value); setPage(0); setShowAutocomplete(true); setActiveIndex(-1); }}
                 onFocus={() => search.length >= 2 && setShowAutocomplete(true)}
+                role="combobox"
+                aria-expanded={showAutocomplete && (autocomplete.data?.length || 0) > 0}
+                aria-controls={autocompleteId}
+                aria-activedescendant={activeIndex >= 0 ? `${autocompleteId}-${activeIndex}` : undefined}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") setShowAutocomplete(false);
-                  if (e.key === "Escape") setShowAutocomplete(false);
+                  const items = autocomplete.data || [];
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setActiveIndex((prev) => Math.min(prev + 1, items.length - 1));
+                    if (!showAutocomplete) setShowAutocomplete(true);
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setActiveIndex((prev) => Math.max(prev - 1, -1));
+                  } else if (e.key === "Enter") {
+                    if (activeIndex >= 0 && items[activeIndex]) {
+                      selectAutocomplete(items[activeIndex].name);
+                    }
+                    setShowAutocomplete(false);
+                    setActiveIndex(-1);
+                  } else if (e.key === "Escape") {
+                    setShowAutocomplete(false);
+                    setActiveIndex(-1);
+                  }
                 }}
               />
               {/* Autocomplete Dropdown */}
               {showAutocomplete && autocompleteQuery.length >= 2 && (autocomplete.data?.length || 0) > 0 && (
                 <div
                   ref={autocompleteRef}
+                  id={autocompleteId}
+                  role="listbox"
                   className="absolute top-full left-0 right-0 mt-1.5 bg-white/95 backdrop-blur-xl border border-white/30 rounded-2xl shadow-lg overflow-hidden z-50"
                 >
-                  {autocomplete.data?.map((item) => (
+                  {autocomplete.data?.map((item, index) => (
                     <button
                       key={item.id}
+                      id={`${autocompleteId}-${index}`}
+                      role="option"
+                      aria-selected={index === activeIndex}
                       type="button"
-                      className="w-full px-4 py-3 text-left hover:bg-primary/5 transition-colors flex items-center gap-3 border-b border-border/10 last:border-0"
+                      className={`w-full px-4 py-3 text-left transition-colors flex items-center gap-3 border-b border-border/10 last:border-0 ${
+                        index === activeIndex ? "bg-primary/10" : "hover:bg-primary/5"
+                      }`}
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => selectAutocomplete(item.name)}
+                      onMouseEnter={() => setActiveIndex(index)}
                     >
                       <Search className="h-3.5 w-3.5 text-muted-foreground/40 flex-shrink-0" />
                       <div className="min-w-0">
@@ -302,6 +334,17 @@ export default function Products() {
               <ProductCardSkeleton key={i} />
             ))}
           </div>
+        ) : products.error ? (
+          <Card className="border-dashed border-white/20 rounded-3xl glass shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+            <CardContent className="py-20 text-center">
+              <Search className="h-10 w-10 mx-auto mb-5 text-destructive/40" />
+              <h3 className="font-light tracking-wide text-lg mb-3">Failed to load products</h3>
+              <p className="text-muted-foreground text-sm tracking-wide mb-6">{products.error.message}</p>
+              <Button variant="outline" className="rounded-full border-border/30 tracking-wide" onClick={() => products.refetch()}>
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
         ) : (products.data?.products.length || 0) > 0 ? (
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5">

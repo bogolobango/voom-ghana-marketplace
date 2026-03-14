@@ -1,10 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import {
   Cog, CircleStop, ArrowUpDown, Zap, Car, Settings,
-  Wind, Thermometer, Droplets, Lightbulb, Circle, Armchair, Loader2,
+  Wind, Thermometer, Droplets, Lightbulb, Circle, Armchair, Loader2, ChevronRight, AlertTriangle,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "engine-parts": <Cog className="h-8 w-8" />,
@@ -34,10 +36,31 @@ export default function Categories() {
       </div>
 
       <div className="container py-10">
+        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground/70 mb-8" aria-label="Breadcrumb">
+          <Link href="/" className="hover:text-primary/90 no-underline tracking-wide">Home</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-foreground/80 tracking-wide">Categories</span>
+        </nav>
         {categories.isLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 animate-spin text-primary/60" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Card key={i} className="rounded-2xl border-white/20 bg-white/50">
+                <CardContent className="p-8 flex flex-col items-center gap-4">
+                  <Skeleton className="w-16 h-16 rounded-2xl" />
+                  <Skeleton className="h-4 w-24" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
+        ) : categories.error ? (
+          <Card className="border-dashed border-white/20 rounded-3xl bg-white/50">
+            <CardContent className="py-20 text-center">
+              <AlertTriangle className="h-10 w-10 mx-auto mb-5 text-destructive/50" />
+              <h3 className="font-light tracking-wide text-lg mb-3">Failed to load categories</h3>
+              <p className="text-muted-foreground/70 text-sm tracking-wide mb-6">{categories.error.message}</p>
+              <Button variant="outline" className="rounded-full" onClick={() => categories.refetch()}>Try Again</Button>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
             {(categories.data || []).map((cat) => (

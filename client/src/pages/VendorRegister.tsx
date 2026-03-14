@@ -158,11 +158,16 @@ export default function VendorRegister() {
               <div>
                 <Label className="tracking-wide">Phone Number *</Label>
                 <Input
-                  className="rounded-2xl border-border/30 mt-1.5"
+                  className={`rounded-2xl border-border/30 mt-1.5 ${form.phone && form.phone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.phone.replace(/[\s-]/g, "")) ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}`}
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9\s-]/g, "") })}
                   placeholder="e.g. 0241234567"
+                  type="tel"
+                  inputMode="numeric"
                 />
+                {form.phone && form.phone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.phone.replace(/[\s-]/g, "")) && (
+                  <p className="text-xs text-destructive/70 mt-1 tracking-wide">Enter a valid Ghana phone number</p>
+                )}
               </div>
               <div>
                 <Label className="tracking-wide">WhatsApp Number</Label>
@@ -231,8 +236,15 @@ export default function VendorRegister() {
               </p>
               <div>
                 <Label className="tracking-wide">Ghana Card Number *</Label>
-                <Input className="rounded-2xl border-border/30 mt-1.5" value={form.ghanaCardNumber}
-                  onChange={(e) => setForm({ ...form, ghanaCardNumber: e.target.value })} placeholder="GHA-XXXXXXXXX-X" />
+                <Input
+                  className={`rounded-2xl border-border/30 mt-1.5 ${form.ghanaCardNumber && !/^GHA-\d{9}-\d$/.test(form.ghanaCardNumber) && form.ghanaCardNumber.length > 4 ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}`}
+                  value={form.ghanaCardNumber}
+                  onChange={(e) => setForm({ ...form, ghanaCardNumber: e.target.value.toUpperCase() })}
+                  placeholder="GHA-XXXXXXXXX-X"
+                />
+                {form.ghanaCardNumber && form.ghanaCardNumber.length > 4 && !/^GHA-\d{9}-\d$/.test(form.ghanaCardNumber) && (
+                  <p className="text-xs text-destructive/70 mt-1 tracking-wide">Format: GHA-XXXXXXXXX-X (e.g. GHA-123456789-0)</p>
+                )}
               </div>
               <div className="mt-4">
                 <Label className="tracking-wide">Ghana Card Photo (front)</Label>

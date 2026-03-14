@@ -260,9 +260,15 @@ export default function Checkout() {
                       <Label className="tracking-wide">Phone Number *</Label>
                       <Input
                         value={form.buyerPhone}
-                        onChange={(e) => setForm({ ...form, buyerPhone: e.target.value })}
+                        onChange={(e) => setForm({ ...form, buyerPhone: e.target.value.replace(/[^0-9\s-]/g, "") })}
                         placeholder="e.g. 0241234567"
+                        type="tel"
+                        inputMode="numeric"
+                        className={form.buyerPhone && form.buyerPhone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.buyerPhone.replace(/[\s-]/g, "")) ? "border-destructive/50 focus-visible:ring-destructive/30" : ""}
                       />
+                      {form.buyerPhone && form.buyerPhone.length > 3 && !/^0[2-9]\d\d{3}\d{4}$/.test(form.buyerPhone.replace(/[\s-]/g, "")) && (
+                        <p className="text-xs text-destructive/70 mt-1 tracking-wide">Enter a valid phone number</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex justify-end pt-2">
@@ -408,10 +414,16 @@ export default function Checkout() {
                   <span className="text-primary/90">{formatGHS(total)}</span>
                 </div>
                 {vendorGroups.size > 1 && (
-                  <p className="text-xs text-amber-600/80 tracking-wide text-center bg-amber-50/50 rounded-xl p-2.5">
-                    Your cart has items from {vendorGroups.size} different vendors.
-                    {vendorGroups.size} separate orders will be created.
-                  </p>
+                  <div className="flex items-start gap-2.5 text-xs text-amber-700 tracking-wide bg-amber-50 border border-amber-200/50 rounded-xl p-3.5">
+                    <span className="text-amber-500 text-base leading-none mt-0.5">⚠</span>
+                    <div>
+                      <p className="font-medium mb-0.5">Multiple vendors detected</p>
+                      <p className="text-amber-600/80">
+                        Your cart has items from {vendorGroups.size} different vendors.
+                        {" "}{vendorGroups.size} separate orders will be created, each confirmed independently.
+                      </p>
+                    </div>
+                  </div>
                 )}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground/60 tracking-wide justify-center">
                   <MessageCircle className="h-3.5 w-3.5" />

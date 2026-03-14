@@ -37,7 +37,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
           <NavLink href="/products" active={location.startsWith("/products")}>
             Browse Parts
           </NavLink>
@@ -52,7 +52,7 @@ export default function Navbar() {
         {/* Right Actions */}
         <div className="flex items-center gap-1.5">
           <Link href="/products">
-            <Button variant="ghost" size="icon" className="text-muted-foreground rounded-2xl">
+            <Button variant="ghost" size="icon" className="text-muted-foreground rounded-2xl" aria-label="Search parts">
               <Search className="h-[18px] w-[18px]" />
             </Button>
           </Link>
@@ -61,7 +61,7 @@ export default function Navbar() {
             <>
               {/* Notifications */}
               <Link href="/notifications">
-                <Button variant="ghost" size="icon" className="relative text-muted-foreground rounded-2xl">
+                <Button variant="ghost" size="icon" className="relative text-muted-foreground rounded-2xl" aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}>
                   <Bell className="h-[18px] w-[18px]" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary/90 text-[10px] font-semibold text-white flex items-center justify-center shadow-sm">
@@ -73,7 +73,7 @@ export default function Navbar() {
 
               {/* Cart */}
               <Link href="/cart">
-                <Button variant="ghost" size="icon" className="relative text-muted-foreground rounded-2xl">
+                <Button variant="ghost" size="icon" className="relative text-muted-foreground rounded-2xl" aria-label={`Cart${cartCount > 0 ? ` (${cartCount} items)` : ""}`}>
                   <ShoppingCart className="h-[18px] w-[18px]" />
                   {cartCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary/90 text-[10px] font-semibold text-white flex items-center justify-center shadow-sm">

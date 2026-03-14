@@ -10,7 +10,7 @@ import VehicleSearch from "@/components/VehicleSearch";
 import {
   Search, ArrowRight, ShieldCheck, Truck, MessageCircle,
   Cog, CircleStop, ArrowUpDown, Zap, Car, Settings,
-  Wind, Thermometer, Droplets, Lightbulb, Circle, Armchair, Store,
+  Wind, Thermometer, Droplets, Lightbulb, Circle, Armchair, Store, AlertTriangle,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -52,6 +52,8 @@ export default function Home() {
   const categories = trpc.category.list.useQuery();
   const featured = trpc.product.featured.useQuery();
   const latest = trpc.product.latest.useQuery();
+  const stats = trpc.publicStats.useQuery();
+  const publicStats = trpc.publicStats.useQuery();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -115,13 +117,13 @@ export default function Home() {
             </div>
 
             {/* Quick Stats — glass tiles */}
-            <div className="flex gap-6 pt-6">
+            <div className="flex flex-wrap gap-4 sm:gap-6 pt-6">
               <div className="glass-dark rounded-2xl px-5 py-3">
-                <p className="text-2xl font-light text-white tracking-wide">1,000+</p>
+                <p className="text-2xl font-light text-white tracking-wide">{stats.data ? (stats.data.totalProducts > 0 ? `${stats.data.totalProducts}+` : "0") : "..."}</p>
                 <p className="text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Parts Listed</p>
               </div>
               <div className="glass-dark rounded-2xl px-5 py-3">
-                <p className="text-2xl font-light text-white tracking-wide">50+</p>
+                <p className="text-2xl font-light text-white tracking-wide">{stats.data ? stats.data.totalVendors : "..."}</p>
                 <p className="text-[11px] text-white/40 tracking-wider uppercase mt-0.5">Verified Vendors</p>
               </div>
               <div className="glass-dark rounded-2xl px-5 py-3">
@@ -147,6 +149,15 @@ export default function Home() {
               </Button>
             </Link>
           </div>
+          {categories.error && (
+            <Card className="border-dashed border-white/20 rounded-3xl mb-6">
+              <CardContent className="py-10 text-center">
+                <AlertTriangle className="h-8 w-8 mx-auto mb-3 text-destructive/50" />
+                <p className="text-sm text-muted-foreground tracking-wide">Failed to load categories</p>
+                <Button variant="outline" size="sm" className="mt-3 rounded-full" onClick={() => categories.refetch()}>Retry</Button>
+              </CardContent>
+            </Card>
+          )}
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
             {(categories.data || []).slice(0, 12).map((cat) => (
               <Link key={cat.id} href={`/products?categoryId=${cat.id}`} className="no-underline">
@@ -165,7 +176,7 @@ export default function Home() {
       </section>
 
       {/* Featured Products */}
-      {(featured.isLoading || (featured.data?.length || 0) > 0) && (
+      {(featured.isLoading || featured.error || (featured.data?.length || 0) > 0) && (
         <section className="zen-section" style={{ background: "rgba(255,255,255,0.25)" }}>
           <div className="container">
             <div className="flex items-center justify-between mb-10">
@@ -179,14 +190,24 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-              {featured.isLoading
-                ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)
-                : featured.data?.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))
-              }
-            </div>
+            {featured.error ? (
+              <Card className="border-dashed border-white/20 rounded-3xl">
+                <CardContent className="py-10 text-center">
+                  <AlertTriangle className="h-8 w-8 mx-auto mb-3 text-destructive/50" />
+                  <p className="text-sm text-muted-foreground tracking-wide">Failed to load featured products</p>
+                  <Button variant="outline" size="sm" className="mt-3 rounded-full" onClick={() => featured.refetch()}>Retry</Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+                {featured.isLoading
+                  ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)
+                  : featured.data?.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))
+                }
+              </div>
+            )}
           </div>
         </section>
       )}

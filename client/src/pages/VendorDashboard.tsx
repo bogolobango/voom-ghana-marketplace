@@ -4,6 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -186,7 +190,7 @@ export default function VendorDashboard() {
 
       <div className="container py-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8">
           <StatCard icon={<Package className="h-5 w-5" />} label="Listings" value={products.length} />
           <StatCard icon={<ShoppingCart className="h-5 w-5" />} label="Pending" value={pendingOrders.length} />
           <StatCard icon={<Eye className="h-5 w-5" />} label="In Progress" value={confirmedOrders.length} />
@@ -252,18 +256,31 @@ export default function VendorDashboard() {
                             <span className="text-xs text-muted-foreground tracking-wide">Qty: {product.quantity}</span>
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive/70 hover:text-destructive rounded-2xl"
-                          onClick={() => {
-                            if (confirm("Delete this product?")) {
-                              deleteProduct.mutate({ id: product.id });
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive/70 hover:text-destructive rounded-2xl"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="rounded-2xl">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete "{product.name}"?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently remove this product listing. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+                              <AlertDialogAction className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteProduct.mutate({ id: product.id })}>
+                                Delete Product
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </CardContent>
                     </Card>
                   );
